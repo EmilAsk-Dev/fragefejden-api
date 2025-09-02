@@ -31,9 +31,9 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
-        base.OnModelCreating(builder); 
+        base.OnModelCreating(builder);
 
-        
+
         builder.Entity<AppUser>(entity =>
         {
             entity.Property(e => e.FullName)
@@ -43,17 +43,17 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("GETUTCDATE()");
 
-            
+
         });
 
-        
+
         builder.Entity<Class>(entity =>
-        {
-            entity.HasOne(c => c.CreatedBy)
-                .WithMany(u => u.ClassesCreated)
-                .HasForeignKey(c => c.CreatedById)
-                .OnDelete(DeleteBehavior.SetNull); 
-        });
+{
+    entity.HasOne(c => c.CreatedBy)
+        .WithMany(u => u.ClassesCreated)
+        .HasForeignKey(c => c.CreatedById)
+        .OnDelete(DeleteBehavior.Restrict);
+});
 
         // ClassMembership relationships
         builder.Entity<ClassMembership>(entity =>
@@ -61,12 +61,12 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
             entity.HasOne(cm => cm.User)
                 .WithMany(u => u.ClassMemberships)
                 .HasForeignKey(cm => cm.UserId)
-                .OnDelete(DeleteBehavior.Cascade); 
+                .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasOne(cm => cm.Class)
                 .WithMany(c => c.Memberships)
                 .HasForeignKey(cm => cm.ClassId)
-                .OnDelete(DeleteBehavior.Cascade); 
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         // § relationships
@@ -78,18 +78,13 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
                 .OnDelete(DeleteBehavior.NoAction);
         });
 
-        // Quiz relationships
+
         builder.Entity<Quiz>(entity =>
         {
-            entity.HasOne(q => q.CreatedBy)
-                .WithMany()
-                .HasForeignKey(q => q.CreatedById)
-                .OnDelete(DeleteBehavior.SetNull);
-
             entity.HasOne(q => q.Subject)
                 .WithMany(s => s.Quizzes)
                 .HasForeignKey(q => q.SubjectId)
-                .OnDelete(DeleteBehavior.Restrict); // Changed from Cascade to Restrict
+                .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasOne(q => q.Level)
                 .WithMany(l => l.Quizzes)
@@ -100,7 +95,13 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
                 .WithMany(c => c.Quizzes)
                 .HasForeignKey(q => q.ClassId)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(q => q.CreatedBy)
+                .WithMany()
+                .HasForeignKey(q => q.CreatedById)
+                .OnDelete(DeleteBehavior.SetNull);
         });
+
 
         builder.Entity<Question>(entity =>
         {
@@ -126,29 +127,29 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
         });
 
         builder.Entity<AiTemplate>(entity =>
-        {
-            entity.HasOne(at => at.CreatedBy)
-                .WithMany()
-                .HasForeignKey(at => at.CreatedById)
-                .OnDelete(DeleteBehavior.SetNull);
+{
+    entity.HasOne(at => at.CreatedBy)
+        .WithMany()
+        .HasForeignKey(at => at.CreatedById)
+        .OnDelete(DeleteBehavior.Restrict);
 
-            entity.HasOne(at => at.Subject)
-                .WithMany(s => s.AiTemplates)
-                .HasForeignKey(at => at.SubjectId)
-                .OnDelete(DeleteBehavior.NoAction);
+    entity.HasOne(at => at.Subject)
+        .WithMany(s => s.AiTemplates)
+        .HasForeignKey(at => at.SubjectId)
+        .OnDelete(DeleteBehavior.NoAction);
 
-            entity.HasOne(at => at.Topic)
-                .WithMany(t => t.AiTemplates)
-                .HasForeignKey(at => at.TopicId)
-                .OnDelete(DeleteBehavior.SetNull);
-        });
+    entity.HasOne(at => at.Topic)
+        .WithMany(t => t.AiTemplates)
+        .HasForeignKey(at => at.TopicId)
+        .OnDelete(DeleteBehavior.SetNull);
+});
 
         builder.Entity<Attempt>(entity =>
         {
             entity.HasOne(a => a.User)
                 .WithMany()
                 .HasForeignKey(a => a.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasOne(a => a.Quiz)
                 .WithMany(q => q.Attempts)
@@ -166,7 +167,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
             entity.HasOne(d => d.Subject)
                 .WithMany(s => s.Duels)
                 .HasForeignKey(d => d.SubjectId)
-                .OnDelete(DeleteBehavior.Restrict); 
+                .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasOne(d => d.Level)
                 .WithMany()
@@ -180,7 +181,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
             entity.HasOne(dp => dp.User)
                 .WithMany()
                 .HasForeignKey(dp => dp.UserId)
-                .OnDelete(DeleteBehavior.Restrict); 
+                .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasOne(dp => dp.InvitedBy)
                 .WithMany()
@@ -193,7 +194,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        
+
         builder.Entity<UserProgress>(entity =>
         {
             entity.HasOne(up => up.User)
@@ -212,7 +213,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
                 .OnDelete(DeleteBehavior.SetNull);
         });
 
-        
+
         builder.Entity<UnlockRule>(entity =>
         {
             entity.HasOne(ur => ur.Subject)
@@ -231,7 +232,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
-        
+
         builder.Entity<Topic>(entity =>
         {
             entity.HasOne(t => t.Subject)
@@ -266,7 +267,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
             entity.HasOne(qq => qq.Question)
                 .WithMany(q => q.QuizQuestions)
                 .HasForeignKey(qq => qq.QuestionId)
-                .OnDelete(DeleteBehavior.Restrict); 
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         builder.Entity<AiGeneration>(entity =>
@@ -292,7 +293,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
             entity.HasOne(r => r.Question)
                 .WithMany()
                 .HasForeignKey(r => r.QuestionId)
-                .OnDelete(DeleteBehavior.Restrict); 
+                .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasOne(r => r.SelectedOption)
                 .WithMany()
@@ -310,7 +311,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
             entity.HasOne(dr => dr.Question)
                 .WithMany()
                 .HasForeignKey(dr => dr.QuestionId)
-                .OnDelete(DeleteBehavior.Restrict); 
+                .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }
