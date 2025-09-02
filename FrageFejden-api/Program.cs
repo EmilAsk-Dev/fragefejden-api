@@ -42,7 +42,7 @@ using (SqlConnection connection = new SqlConnection(connectionString))
     }
     catch (SqlException)
     {
-        // log if you want
+        
     }
 }
 
