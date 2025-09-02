@@ -1,5 +1,4 @@
-﻿// File: Api/Auth/JwtTokenService.cs
-using FrageFejden.Api.Auth.Dto;
+﻿using FrageFejden.Api.Auth.Dto;
 using FrageFejden.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;

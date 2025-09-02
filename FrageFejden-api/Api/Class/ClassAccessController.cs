@@ -14,7 +14,6 @@ public sealed class ClassAccessController : ControllerBase
     private readonly IClassService _svc;
     public ClassAccessController(IClassService svc) => _svc = svc;
 
-
     private Guid UserId() =>
         Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub"), out var g)
             ? g : throw new UnauthorizedAccessException();
@@ -32,18 +31,10 @@ public sealed class ClassAccessController : ControllerBase
         catch (InvalidOperationException e) { return Conflict(e.Message); }
     }
 
-    [SwaggerOperation(
-        Summary = "Lämna en klass",
-        Description = "Låter den inloggade användaren lämna en klass baserat på klassens ID."
-    )]
     [HttpDelete("{id:guid}/leave"), Authorize]
     public async Task<IActionResult> Leave(Guid id, CancellationToken ct)
         => (await _svc.LeaveAsync(UserId(), id, ct)) ? NoContent() : NotFound();
 
-    [SwaggerOperation(
-        Summary = "Återgenererar en join-kod för en klass",
-        Description = "Återgenererar och returnerar en ny join-kod för den angivna klassen. Endast lärare kan utföra denna åtgärd."
-    )]
     [HttpPost("{id:guid}/regen-joincode"), Authorize]
     public async Task<IActionResult> RegenerateJoinCode(Guid id, CancellationToken ct)
     {

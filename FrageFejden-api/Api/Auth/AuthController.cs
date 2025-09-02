@@ -8,9 +8,7 @@ using Swashbuckle.AspNetCore.Annotations;
 
 namespace FrageFejden.Api.Auth
 {
-    /// <summary>
-    /// API för registrering, inloggning, utloggning och identitet.
-    /// </summary>
+
     [ApiController]
     [Route("api/[controller]")]
     [Produces("application/json")]

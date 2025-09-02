@@ -1,6 +1,7 @@
 ﻿using FrageFejden;
 using FrageFejden.Api.Auth;
 using FrageFejden.Entities;
+using FrageFejden.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.SqlClient;
@@ -98,11 +99,18 @@ builder.Services.AddSwaggerGen(c =>
     {
         { scheme, Array.Empty<string>() }
     });
+    c.CustomSchemaIds(t =>
+{
+    var ns = t.Namespace?.Split('.').LastOrDefault();
+    return string.IsNullOrWhiteSpace(ns) ? t.Name : $"{ns}.{t.Name}";
+});
 
 });
 
 // Jwt token factory
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+builder.Services.AddScoped<ISubjectService, SubjectService>();
+
 
 var app = builder.Build();
 
