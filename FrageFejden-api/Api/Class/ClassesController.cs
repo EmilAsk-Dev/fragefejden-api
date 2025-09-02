@@ -27,6 +27,7 @@ public sealed class ClassesController : ControllerBase
         var (items, total) = await _svc.ListAsync(page, pageSize, ct);
         return Ok(new { total, page, pageSize, items });
     }
+
     [SwaggerOperation(
         Summary = "Hämtar en klass efter ID",
         Description = "Returnerar information om en specifik klass baserat på dess ID."
@@ -34,6 +35,7 @@ public sealed class ClassesController : ControllerBase
     [HttpGet("{id:guid}"), Authorize]
     public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
         => (await _svc.GetByIdAsync(id, ct)) is { } cls ? Ok(cls) : NotFound();
+
 
     [SwaggerOperation(
         Summary = "Skapar en ny klass",
@@ -46,6 +48,7 @@ public sealed class ClassesController : ControllerBase
         var cls = await _svc.CreateAsync(UserId(), req, ct);
         return CreatedAtAction(nameof(GetById), new { id = cls.Id }, cls);
     }
+
     [SwaggerOperation(
         Summary = "Uppdaterar en klass",
         Description = "Uppdaterar informationen för en specifik klass baserat på dess ID. Endast lärare kan utföra denna åtgärd."
@@ -56,6 +59,7 @@ public sealed class ClassesController : ControllerBase
         try { return await _svc.UpdateAsync(id, UserId(), req, ct) ? NoContent() : NotFound(); }
         catch (UnauthorizedAccessException) { return Forbid(); }
     }
+
     [SwaggerOperation(
         Summary = "Tar bort en klass",
         Description = "Tar bort en specifik klass baserat på dess ID. Endast lärare kan utföra denna åtgärd."

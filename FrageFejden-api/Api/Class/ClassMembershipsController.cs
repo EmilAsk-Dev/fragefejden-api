@@ -28,6 +28,7 @@ public sealed class ClassMembershipsController : ControllerBase
     }
 
     public sealed record AddMemberRequest(Guid UserId, Role RoleInClass);
+
     [SwaggerOperation(
         Summary = "Lägger till en medlem i en klass",
         Description = "Lägger till en användare som medlem i den angivna klassen med en specifik roll. Endast lärare kan utföra denna åtgärd."
@@ -38,6 +39,7 @@ public sealed class ClassMembershipsController : ControllerBase
         try { return await _svc.AddMemberAsync(id, UserId(), req.UserId, req.RoleInClass, ct) ? Ok() : Conflict("User already in class."); }
         catch (UnauthorizedAccessException) { return Forbid(); }
     }
+
     [SwaggerOperation(
         Summary = "Tar bort en medlem från en klass",
         Description = "Tar bort en användare från den angivna klassen baserat på användarens ID. Endast lärare kan utföra denna åtgärd."
