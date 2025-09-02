@@ -9,10 +9,10 @@ namespace FrageFejden.Entities
 {
     public class UnlockRule
     {
-        public long Id { get; set; }
-        public long SubjectId { get; set; }
-        public long? FromLevelId { get; set; }
-        public long ToLevelId { get; set; }
+        public Guid Id { get; set; }
+        public Guid SubjectId { get; set; }
+        public Guid? FromLevelId { get; set; }
+        public Guid ToLevelId { get; set; }
         public UnlockConditionType Condition { get; set; }
         public int Threshold { get; set; }
 

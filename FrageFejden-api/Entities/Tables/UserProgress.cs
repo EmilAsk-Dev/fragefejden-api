@@ -8,10 +8,10 @@ namespace FrageFejden.Entities
 {
     public class UserProgress
     {
-        public long Id { get; set; }
-        public Guid UserId { get; set; }      
-        public long SubjectId { get; set; }
-        public long? LevelId { get; set; }
+        public Guid Id { get; set; }
+        public Guid UserId { get; set; }
+        public Guid SubjectId { get; set; }
+        public Guid? LevelId { get; set; }
         public int Xp { get; set; }
         public DateTime? LastActivity { get; set; }
 

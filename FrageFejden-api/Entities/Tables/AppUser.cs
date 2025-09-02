@@ -10,12 +10,12 @@ namespace FrageFejden.Entities;
 
 public class AppUser : IdentityUser<Guid>
 {
-    
+
     public string FullName { get; set; } = null!;
-    
+
     public Role Role { get; set; } = Role.student;
-    public string? AvatarUrl { get; set; } 
-    public DateTime CreatedAt { get; set; } 
+    public string? AvatarUrl { get; set; }
+    public DateTime CreatedAt { get; set; }
 
     public double experiencePoints { get; set; }
 

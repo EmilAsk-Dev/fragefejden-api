@@ -9,10 +9,10 @@ namespace FrageFejden.Entities
 {
     public class Attempt
     {
-        public long Id { get; set; }
-        public Guid UserId { get; set; }     
-        public long QuizId { get; set; }
-        public long? LevelIdAtTime { get; set; }
+        public Guid Id { get; set; }
+        public Guid UserId { get; set; }
+        public Guid QuizId { get; set; }
+        public Guid? LevelIdAtTime { get; set; }
         public DateTime StartedAt { get; set; }
         public DateTime? CompletedAt { get; set; }
         public int? Score { get; set; }

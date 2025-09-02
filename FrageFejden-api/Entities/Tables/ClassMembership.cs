@@ -9,8 +9,8 @@ namespace FrageFejden.Entities
 {
     public class ClassMembership
     {
-        public long Id { get; set; }
-        public long ClassId { get; set; }
+        public Guid Id { get; set; }
+        public Guid ClassId { get; set; }
         public Guid UserId { get; set; }
         public Role RoleInClass { get; set; } = Role.student;
         public DateTime EnrolledAt { get; set; }

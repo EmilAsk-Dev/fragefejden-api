@@ -8,8 +8,8 @@ namespace FrageFejden.Entities
 {
     public class Topic
     {
-        public long Id { get; set; }
-        public long SubjectId { get; set; }
+        public Guid Id { get; set; }
+        public Guid SubjectId { get; set; }
         public string Name { get; set; } = null!;
         public string? Description { get; set; }
 

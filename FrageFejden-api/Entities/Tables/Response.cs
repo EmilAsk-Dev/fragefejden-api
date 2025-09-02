@@ -8,10 +8,10 @@ namespace FrageFejden.Entities
 {
     public class Response
     {
-        public long Id { get; set; }
-        public long AttemptId { get; set; }
-        public long QuestionId { get; set; }
-        public long? SelectedOptionId { get; set; }
+        public Guid Id { get; set; }
+        public Guid AttemptId { get; set; }
+        public Guid QuestionId { get; set; }
+        public Guid? SelectedOptionId { get; set; }
         public string? FreeText { get; set; }
         public bool IsCorrect { get; set; }
         public int? TimeMs { get; set; }

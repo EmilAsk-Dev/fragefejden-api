@@ -6,14 +6,14 @@ using System.Threading.Tasks;
 
 namespace FrageFejden.Entities
 {
-    public class QuizQuestion
+    public class QuestionOption
     {
-        public long Id { get; set; }
-        public long QuizId { get; set; }
-        public long QuestionId { get; set; }
+        public Guid Id { get; set; }
+        public Guid QuestionId { get; set; }
+        public string OptionText { get; set; } = null!;
+        public bool IsCorrect { get; set; }
         public int SortOrder { get; set; }
 
-        public Quiz Quiz { get; set; } = null!;
         public Question Question { get; set; } = null!;
     }
 }

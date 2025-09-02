@@ -4,6 +4,7 @@ using FrageFejden.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace FrageFejden.Api.Auth
 {
@@ -28,10 +29,10 @@ namespace FrageFejden.Api.Auth
             _jwt = jwt;
         }
 
-        /// <summary>Registrerar en ny användare.</summary>
-        /// <response code="201">Användaren skapades och en JWT returneras.</response>
-        /// <response code="400">Validering misslyckades (t.ex. ogiltig e-post/lösenord).</response>
-        /// <response code="409">E-post eller användarnamn används redan.</response>
+        [SwaggerOperation(
+            Summary = "Registrerar en ny användare och returnerar JWT.",
+            Description = "Registrerar en ny användare med användarnamn, e-post, fullständigt namn och lösenord. Returnerar en JWT som används för autentisering i efterföljande anrop."
+        )]
         [HttpPost("register")]
         [AllowAnonymous]
         public async Task<IActionResult> Register([FromBody] RegisterRequest req)
@@ -66,9 +67,11 @@ namespace FrageFejden.Api.Auth
             }
         }
 
-        /// <summary>Loggar in en användare och returnerar JWT.</summary>
-        /// <response code="200">Inloggning lyckades och en JWT returneras.</response>
-        /// <response code="401">Ogiltiga uppgifter eller spärrat konto.</response>
+
+        [SwaggerOperation(
+            Summary = "Loggar in en användare och returnerar JWT.",
+            Description = "Loggar in en användare med e-post eller användarnamn och lösenord. Returnerar en JWT som används för autentisering i efterföljande anrop."
+        )]
         [HttpPost("login")]
         [AllowAnonymous]
         public async Task<IActionResult> Login([FromBody] LoginRequest req)
@@ -96,12 +99,15 @@ namespace FrageFejden.Api.Auth
             return Ok(token);
         }
 
-        /// <summary>Loggar ut (stateless).</summary>
+        [SwaggerOperation(
+            Summary = "Loggar ut den aktuella användaren.",
+            Description = "Loggar ut den aktuella användaren genom att ta bort JWT från klienten. Detta påverkar inte serverns tillstånd eftersom JWT är statslösa."
+        )]
         [Authorize]
         [HttpPost("logout")]
         public IActionResult Logout() => NoContent();
 
-        /// <summary>Loggar ut överallt.</summary>
+
         [Authorize]
         [HttpPost("logout-all")]
         public async Task<IActionResult> LogoutAll()
@@ -116,7 +122,10 @@ namespace FrageFejden.Api.Auth
             return NoContent();
         }
 
-        /// <summary>Returnerar information om den inloggade användaren.</summary>
+        [SwaggerOperation(
+            Summary = "Hämtar information om den aktuella användaren.",
+            Description = "Hämtar information om den aktuella användaren baserat på den medföljande JWT. Returnerar användarens ID, användarnamn, e-post och roller."
+        )]
         [Authorize]
         [HttpGet("me")]
         public async Task<IActionResult> Me()

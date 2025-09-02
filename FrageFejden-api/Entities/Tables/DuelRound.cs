@@ -8,10 +8,10 @@ namespace FrageFejden.Entities
 {
     public class DuelRound
     {
-        public long Id { get; set; }
-        public long DuelId { get; set; }
+        public Guid Id { get; set; }
+        public Guid DuelId { get; set; }
         public int RoundNumber { get; set; }
-        public long QuestionId { get; set; }
+        public Guid QuestionId { get; set; }
         public int TimeLimitSeconds { get; set; } = 30;
 
         public Duel Duel { get; set; } = null!;

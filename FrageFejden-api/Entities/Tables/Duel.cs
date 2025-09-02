@@ -9,9 +9,9 @@ namespace FrageFejden.Entities
 {
     public class Duel
     {
-        public long Id { get; set; }
-        public long SubjectId { get; set; }
-        public long? LevelId { get; set; }
+        public Guid Id { get; set; }
+        public Guid SubjectId { get; set; }
+        public Guid? LevelId { get; set; }
         public DuelStatus Status { get; set; } = DuelStatus.pending;
         public int BestOf { get; set; } = 5;
         public DateTime? StartedAt { get; set; }

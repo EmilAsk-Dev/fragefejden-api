@@ -9,16 +9,16 @@ namespace FrageFejden.Entities
 {
     public class Question
     {
-        public long Id { get; set; }
-        public long SubjectId { get; set; }
-        public long? TopicId { get; set; }
+        public Guid Id { get; set; }
+        public Guid SubjectId { get; set; }
+        public Guid? TopicId { get; set; }
         public QuestionType Type { get; set; }
         public Difficulty Difficulty { get; set; }
         public string Stem { get; set; } = null!;
         public string? Explanation { get; set; }
         public bool SourceAi { get; set; } = false;
-        public Guid? CreatedById { get; set; }    // Changed from long to Guid
-        public Guid? ApprovedById { get; set; }   // Changed from long to Guid
+        public Guid CreatedById { get; set; }
+        public Guid? ApprovedById { get; set; }
         public DateTime CreatedAt { get; set; }
 
         public Subject Subject { get; set; } = null!;

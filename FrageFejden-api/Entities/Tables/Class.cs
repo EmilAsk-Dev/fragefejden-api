@@ -8,11 +8,11 @@ namespace FrageFejden.Entities
 {
     public class Class
     {
-        public long Id { get; set; }
+        public Guid Id { get; set; }
         public string Name { get; set; } = null!;
         public string? GradeLabel { get; set; }
         public string? JoinCode { get; set; }
-        public Guid? CreatedById { get; set; }   // nullable to allow historical data if needed
+        public Guid? CreatedById { get; set; }
         public DateTime CreatedAt { get; set; }
 
         public AppUser? CreatedBy { get; set; }

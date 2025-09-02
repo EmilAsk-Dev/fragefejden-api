@@ -9,13 +9,13 @@ namespace FrageFejden.Entities
 {
     public class AiTemplate
     {
-        public long Id { get; set; }
-        public long SubjectId { get; set; }
-        public long? TopicId { get; set; }
+        public Guid Id { get; set; }
+        public Guid SubjectId { get; set; }
+        public Guid? TopicId { get; set; }
         public string Prompt { get; set; } = null!;
         public Difficulty? DifficultyMin { get; set; }
         public Difficulty? DifficultyMax { get; set; }
-        public Guid? CreatedById { get; set; }   // Changed from long to Guid
+        public Guid CreatedById { get; set; }
         public DateTime CreatedAt { get; set; }
 
         public Subject Subject { get; set; } = null!;

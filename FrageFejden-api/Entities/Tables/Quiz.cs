@@ -8,20 +8,24 @@ namespace FrageFejden.Entities
 {
     public class Quiz
     {
-        public long Id { get; set; }
-        public long SubjectId { get; set; }
-        public long? LevelId { get; set; }      // null => general quiz
-        public long? ClassId { get; set; }      // optional
+        public Guid Id { get; set; }
+
+        public Guid SubjectId { get; set; }
+        public Guid? LevelId { get; set; }
+        public Guid? ClassId { get; set; }
+
         public string Title { get; set; } = null!;
         public string? Description { get; set; }
         public bool IsPublished { get; set; } = false;
-        public Guid? CreatedById { get; set; }  // Changed from long to Guid
+
+        public Guid? CreatedById { get; set; }
         public DateTime CreatedAt { get; set; }
 
         public Subject Subject { get; set; } = null!;
         public Level? Level { get; set; }
         public Class? Class { get; set; }
-        public AppUser? CreatedBy { get; set; }
+
+        public AppUser? CreatedBy { get; set; }  // Made nullable to match CreatedById
         public ICollection<QuizQuestion> QuizQuestions { get; set; } = new List<QuizQuestion>();
         public ICollection<Attempt> Attempts { get; set; } = new List<Attempt>();
     }

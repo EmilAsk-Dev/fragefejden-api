@@ -8,8 +8,8 @@ namespace FrageFejden.Entities
 {
     public class Level
     {
-        public long Id { get; set; }
-        public long SubjectId { get; set; }
+        public Guid Id { get; set; }
+        public Guid SubjectId { get; set; }
         public int LevelNumber { get; set; }
         public string? Title { get; set; }
         public int MinXpUnlock { get; set; } = 0;

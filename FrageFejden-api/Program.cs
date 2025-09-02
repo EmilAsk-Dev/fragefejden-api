@@ -1,5 +1,5 @@
 ﻿using FrageFejden;
-using FrageFejden.Api.Auth;                 
+using FrageFejden.Api.Auth;
 using FrageFejden.Entities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -26,7 +26,7 @@ try
 }
 catch (Exception ex)
 {
-    Console.WriteLine("❌ Database connection failed: " + ex.Message);   
+    Console.WriteLine("❌ Database connection failed: " + ex.Message);
 }
 
 // EF Core
@@ -42,7 +42,7 @@ using (SqlConnection connection = new SqlConnection(connectionString))
     }
     catch (SqlException)
     {
-        
+
     }
 }
 
@@ -54,7 +54,7 @@ builder.Services.AddIdentityCore<AppUser>(opt =>
 .AddRoles<IdentityRole<Guid>>()
 .AddEntityFrameworkStores<AppDbContext>()
 .AddSignInManager()
-.AddDefaultTokenProviders(); // <- your chain had a stray ';' before this
+.AddDefaultTokenProviders();
 
 // JWT Auth
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -83,6 +83,7 @@ builder.Services.AddSwaggerGen(c =>
 {
     // Enable JWT in Swagger UI
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "FrageFejden API", Version = "v1" });
+    c.EnableAnnotations();
     var scheme = new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -97,6 +98,7 @@ builder.Services.AddSwaggerGen(c =>
     {
         { scheme, Array.Empty<string>() }
     });
+
 });
 
 // Jwt token factory
@@ -126,5 +128,6 @@ app.MapControllers();
 //        if (!await roleMgr.RoleExistsAsync(r))
 //            await roleMgr.CreateAsync(new IdentityRole<Guid>(r));
 //}
+app.UseDeveloperExceptionPage();
 
 app.Run();

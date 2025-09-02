@@ -8,9 +8,9 @@ namespace FrageFejden.Entities
 {
     public class AiGeneration
     {
-        public long Id { get; set; }
-        public long? TemplateId { get; set; }
-        public long QuestionId { get; set; }
+        public Guid Id { get; set; }
+        public Guid? TemplateId { get; set; }
+        public Guid QuestionId { get; set; }
         public string? ModelName { get; set; }
         public string? ModelVersion { get; set; }
         public string? Metadata { get; set; }    // JSON
