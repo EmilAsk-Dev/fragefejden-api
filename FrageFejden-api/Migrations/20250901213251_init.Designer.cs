@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FrageFejden_api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250828092928_Initial")]
-    partial class Initial
+    [Migration("20250901213251_init")]
+    partial class init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
