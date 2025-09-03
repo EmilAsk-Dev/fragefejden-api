@@ -31,6 +31,11 @@ namespace FrageFejden.Api.Auth
             Summary = "Registrerar en ny användare och returnerar JWT.",
             Description = "Registrerar en ny användare med användarnamn, e-post, fullständigt namn och lösenord. Returnerar en JWT som används för autentisering i efterföljande anrop."
         )]
+
+
+
+
+
         [HttpPost("register")]
         [AllowAnonymous]
         public async Task<IActionResult> Register([FromBody] RegisterRequest req)
