@@ -1,8 +1,11 @@
-using System.Security.Cryptography;
-using Microsoft.EntityFrameworkCore;
 using FrageFejden.Entities;
 using FrageFejden.Entities.Enums;
-
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using FrageFejden.Data;
 namespace FrageFejden_api.Services;
 
 public sealed class ClassService : IClassService
@@ -25,15 +28,23 @@ public sealed class ClassService : IClassService
 
     public async Task<IReadOnlyList<MyClassDto>> GetMyClassesAsync(Guid userId, CancellationToken ct)
     {
-        var data = await _db.ClassMemberships.AsNoTracking()
+        return await _db.ClassMemberships
+            .AsNoTracking()
             .Where(m => m.UserId == userId)
+            .OrderBy(m => m.Class.Name) 
             .Select(m => new MyClassDto(
-                m.ClassId, m.RoleInClass, m.EnrolledAt,
-                m.Class.Id, m.Class.Name, m.Class.GradeLabel, m.Class.JoinCode, m.Class.CreatedById, m.Class.CreatedAt))
-            .OrderBy(x => x.Name)
+                m.ClassId,
+                m.RoleInClass,
+                m.EnrolledAt,
+                m.Class.Id,
+                m.Class.Name,
+                m.Class.GradeLabel,
+                m.Class.JoinCode,
+                m.Class.CreatedById,
+                m.Class.CreatedAt))
             .ToListAsync(ct);
-        return data;
     }
+
 
     public async Task<IReadOnlyList<MemberDto>> GetMembersAsync(Guid classId, Guid requesterId, CancellationToken ct)
     {
@@ -200,4 +211,45 @@ public sealed class ClassService : IClassService
         for (var i = 0; i < len; i++) chars[i] = alphabet[bytes[i] % alphabet.Length];
         return new string(chars);
     }
+
+
+    public async Task<double?> GetPointsForUser(Guid userId, CancellationToken ct)
+    {
+        var user = await _db.Users
+            .Where(u => u.Id == userId)
+            .FirstOrDefaultAsync(ct);
+
+        return user?.experiencePoints;
+    }
+
+    public async Task<List<ScoreDto>> GetScoresForClassAsync(Guid userId, Guid classId, CancellationToken ct)
+    {
+        // Ensure the requesting user is a member of the class
+        var isMember = await _db.ClassMemberships
+            .AsNoTracking()
+            .AnyAsync(m => m.UserId == userId && m.ClassId == classId, ct);
+
+        if (!isMember) return new List<ScoreDto>(); // or throw/Forbid at controller
+
+        // Join memberships to users and project to ScoreDto
+        var result = await _db.ClassMemberships
+            .AsNoTracking()
+            .Where(m => m.ClassId == classId)
+            .Join(_db.Users,
+                m => m.UserId,
+                u => u.Id,
+                (m, u) => new ScoreDto
+                {
+                    UserId = u.Id,
+                    UserName = u.UserName,
+                    Score = u.experiencePoints
+                })
+            .ToListAsync(ct);
+
+        return result;
+    }
+
+
+
+
 }

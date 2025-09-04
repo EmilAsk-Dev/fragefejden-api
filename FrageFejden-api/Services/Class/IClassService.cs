@@ -3,18 +3,24 @@ using FrageFejden.Entities.Enums;
 
 namespace FrageFejden_api.Services;
 
-// Requests (shared by controller & service)
 public sealed record CreateClassRequest(string Name, string? GradeLabel, string? Description = null, bool MakeMeTeacher = true);
 public sealed record UpdateClassRequest(string Name, string? GradeLabel, string? Description);
 public sealed record JoinRequest(string JoinCode);
 
-// Service-facing DTOs (lightweight)
+
 public sealed record MyClassDto(
     Guid ClassId, Role RoleInClass, DateTime EnrolledAt,
     Guid Id, string Name, string? GradeLabel, string JoinCode, Guid? CreatedById, DateTime CreatedAt);
 
 public sealed record MemberDto(Guid UserId, Role RoleInClass, DateTime EnrolledAt, Guid Id, string FullName, string Email, string? AvatarUrl);
 public sealed record JoinedClassDto(Guid Id, string Name, string? GradeLabel);
+
+public sealed class ScoreDto
+{
+    public Guid UserId { get; set; }
+    public string? UserName { get; set; }
+    public double Score { get; set; }
+}
 
 public interface IClassService
 {
@@ -37,4 +43,8 @@ public interface IClassService
 
     // Helper
     Task<bool> IsTeacherOrOwnerAsync(Guid classId, Guid userId, CancellationToken ct);
+
+
+    Task<double?> GetPointsForUser(Guid userId, CancellationToken ct);
+    Task<List<ScoreDto>> GetScoresForClassAsync(Guid userId, Guid classId, CancellationToken ct);
 }

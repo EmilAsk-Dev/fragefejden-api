@@ -4,6 +4,7 @@ using FrageFejden_api.Services;
 using System.Security.Claims;
 using Swashbuckle.AspNetCore.Annotations;
 
+
 [ApiController]
 [Route("api/Class")] // keep existing path; use "api/classes" if you want to modernize
 [Produces("application/json")]
@@ -70,4 +71,31 @@ public sealed class ClassesController : ControllerBase
         try { return await _svc.DeleteAsync(id, UserId(), ct) ? NoContent() : NotFound(); }
         catch (UnauthorizedAccessException) { return Forbid(); }
     }
+
+    [SwaggerOperation(
+    Summary = "Hämtar användarens experience points",
+    Description = "Returnerar experience points för angiven användare."
+    )]
+    [HttpGet("user/{userId:guid}/points"), Authorize]
+    public async Task<ActionResult<double?>> GetPointsForUser(Guid userId, CancellationToken ct)
+    {
+        var points = await _svc.GetPointsForUser(userId, ct);
+        return points is null ? NotFound() : Ok(points);
+    }
+
+    [SwaggerOperation(
+        Summary = "Hämtar poäng för alla användare i en klass (kräver medlemskap)",
+        Description = "Returnerar poängen för alla medlemmar i klassen om den anropande användaren är medlem."
+    )]
+    [HttpGet("class/{classId:guid}/scores"), Authorize]
+    public async Task<ActionResult<List<ScoreDto>>> GetScoresForClass(
+        Guid classId,
+        [FromQuery] Guid userId,
+        CancellationToken ct)
+    {
+        var result = await _svc.GetScoresForClassAsync(userId, classId, ct);
+        return Ok(result);
+    }
+
+
 }
