@@ -1,5 +1,6 @@
 ﻿using FrageFejden;
 using FrageFejden.Api.Auth;
+using FrageFejden.Data;
 using FrageFejden.Entities;
 using FrageFejden.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -110,7 +111,7 @@ builder.Services.AddSwaggerGen(c =>
 // Jwt token factory
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<ISubjectService, SubjectService>();
-
+builder.Services.AddScoped<DatabaseSeeder>();
 
 var app = builder.Build();
 
@@ -120,6 +121,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+await app.Services.SeedDatabaseAsync();
+
 
 app.UseHttpsRedirection();
 
