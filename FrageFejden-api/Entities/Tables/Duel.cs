@@ -17,6 +17,8 @@ namespace FrageFejden.Entities
         public DateTime? StartedAt { get; set; }
         public DateTime? EndedAt { get; set; }
 
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
         public Subject Subject { get; set; } = null!;
         public Level? Level { get; set; }
         public ICollection<DuelParticipant> Participants { get; set; } = new List<DuelParticipant>();

@@ -128,14 +128,13 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Seed roles
-//using (var scope = app.Services.CreateScope())
-//{
-//    var roleMgr = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
-//    foreach (var r in new[] { "Student", "Lärare", "Admin" })
-//        if (!await roleMgr.RoleExistsAsync(r))
-//            await roleMgr.CreateAsync(new IdentityRole<Guid>(r));
-//}
+using (var scope = app.Services.CreateScope())
+{
+    var roleMgr = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+    foreach (var r in new[] { "Student", "Lärare", "Admin" })
+        if (!await roleMgr.RoleExistsAsync(r))
+            await roleMgr.CreateAsync(new IdentityRole<Guid>(r));
+}
 app.UseDeveloperExceptionPage();
 
 app.Run();

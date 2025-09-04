@@ -31,6 +31,11 @@ namespace FrageFejden.Api.Auth
             Summary = "Registrerar en ny användare och returnerar JWT.",
             Description = "Registrerar en ny användare med användarnamn, e-post, fullständigt namn och lösenord. Returnerar en JWT som används för autentisering i efterföljande anrop."
         )]
+
+
+
+
+
         [HttpPost("register")]
         [AllowAnonymous]
         public async Task<IActionResult> Register([FromBody] RegisterRequest req)
@@ -133,7 +138,7 @@ namespace FrageFejden.Api.Auth
 
             var user = await _userManager.FindByIdAsync(userId);
             var roles = user is null ? Array.Empty<string>() : await _userManager.GetRolesAsync(user);
-            return Ok(new { user?.Id, user?.UserName, user?.Email, Roles = roles });
+            return Ok(new { user?.Id, user?.UserName, user?.Email, Roles = roles, exp = user?.experiencePoints });
         }
     }
 }
