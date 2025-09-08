@@ -1,4 +1,5 @@
 ﻿using FrageFejden.Entities;
+using FrageFejden_api.Entities.Tables;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -8,8 +9,10 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
     }
+    
+    public DbSet<UserDailyQuestion> UserDailyQuestions => Set<UserDailyQuestion>();
 
-    // Your DbSets here
+    
     public DbSet<Class> Classes { get; set; }
     public DbSet<ClassMembership> ClassMemberships { get; set; }
     public DbSet<Subject> Subjects { get; set; }

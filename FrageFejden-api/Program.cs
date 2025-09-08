@@ -13,6 +13,8 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
 
+Encoding.RegisterProvider(CodePagesEncodingProvider.Instance); 
+
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("Default");
 if (connectionString is null)
@@ -115,8 +117,10 @@ builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<ISubjectService, SubjectService>();
 builder.Services.AddScoped<IClassService, ClassService>();
 builder.Services.AddScoped<IDuelService, DuelService>();
+builder.Services.AddScoped<DailyQuestionService>();
 
-builder.Services.AddScoped<DatabaseSeeder>();
+builder.Services.AddSingleton<QuestionBank>();        
+builder.Services.AddScoped<DailyQuestionService>();
 
 var app = builder.Build();
 

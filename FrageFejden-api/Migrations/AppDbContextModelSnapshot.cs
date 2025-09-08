@@ -684,6 +684,42 @@ namespace FrageFejden_api.Migrations
                     b.ToTable("UserProgresses");
                 });
 
+            modelBuilder.Entity("FrageFejden_api.Entities.Tables.UserDailyQuestion", b =>
+                {
+                    b.Property<Guid>("id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AnswerGiven")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("Answered")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset?>("AnsweredAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<bool?>("Correct")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<int>("QuestionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("id");
+
+                    b.ToTable("UserDailyQuestions");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", b =>
                 {
                     b.Property<Guid>("Id")
