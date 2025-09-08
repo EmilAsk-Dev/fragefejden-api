@@ -281,6 +281,9 @@ namespace FrageFejden_api.Migrations
                     b.Property<int>("BestOf")
                         .HasColumnType("int");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime?>("EndedAt")
                         .HasColumnType("datetime2");
 

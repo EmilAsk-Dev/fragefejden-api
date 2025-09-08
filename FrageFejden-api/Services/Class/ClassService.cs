@@ -249,7 +249,16 @@ public sealed class ClassService : IClassService
         return result;
     }
 
+    public async Task<(Guid Id, string Name)?> FindClassByJoinCodeAsync(string joinCode, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(joinCode)) return null;
 
+        var klass = await _db.Classes
+            .AsNoTracking()
+            .Where(c => c.JoinCode == joinCode)
+            .Select(c => new { c.Id, c.Name })
+            .FirstOrDefaultAsync(ct);
 
-
+        return klass is null ? null : (klass.Id, klass.Name);
+    }
 }

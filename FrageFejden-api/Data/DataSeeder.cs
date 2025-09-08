@@ -32,7 +32,7 @@ namespace FrageFejden.Data
         {
             _context = context;
             _userManager = userManager;
-        }
+        }   
 
 
 
