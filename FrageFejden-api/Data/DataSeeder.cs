@@ -32,49 +32,51 @@ namespace FrageFejden.Data
         {
             _context = context;
             _userManager = userManager;
-        }   
+        }
 
 
 
         public async Task SeedAsync(CancellationToken ct = default)
-            {
-                
-                await using var tx = await _context.Database.BeginTransactionAsync(ct);
+        {
+            await using var tx = await _context.Database.BeginTransactionAsync(ct);
 
-                
-                await SeedIfEmpty<AppUser>(SeedUsersAsync, ct);
-                await SeedIfEmpty<Subject>(SeedSubjectsAsync, ct);
-                await SeedIfEmpty<Topic>(SeedTopicsAsync, ct);
-                await SeedIfEmpty<Level>(SeedLevelsAsync, ct);
+            await SeedIfEmpty<AppUser>(SeedUsersAsync, ct);
 
-                await SeedIfEmpty<Class>(SeedClassesAsync, ct);
-                await SeedIfEmpty<ClassMembership>(SeedClassMembershipsAsync, ct);
+            // ⬇️ Classes (WITH subjects) first so Subject rows exist
+            await SeedIfEmpty<Class>(SeedClassesAsync, ct);
 
-                await SeedIfEmpty<Question>(SeedQuestionsAsync, ct);
-                await SeedIfEmpty<QuestionOption>(SeedQuestionOptionsAsync, ct);
+            // ⬇️ Everything that references subjects can now run
+            await SeedIfEmpty<Topic>(SeedTopicsAsync, ct);
+            await SeedIfEmpty<Level>(SeedLevelsAsync, ct);
 
-                await SeedIfEmpty<Quiz>(SeedQuizzesAsync, ct);
-                await SeedIfEmpty<QuizQuestion>(SeedQuizQuestionsAsync, ct);
+            await SeedIfEmpty<ClassMembership>(SeedClassMembershipsAsync, ct);
 
-                await SeedIfEmpty<AiTemplate>(SeedAiTemplatesAsync, ct);
+            await SeedIfEmpty<Question>(SeedQuestionsAsync, ct);
+            await SeedIfEmpty<QuestionOption>(SeedQuestionOptionsAsync, ct);
 
-                await SeedIfEmpty<Attempt>(SeedAttemptsAsync, ct);
-                await SeedIfEmpty<Response>(SeedResponsesAsync, ct);
+            await SeedIfEmpty<Quiz>(SeedQuizzesAsync, ct);
+            await SeedIfEmpty<QuizQuestion>(SeedQuizQuestionsAsync, ct);
 
-                await SeedIfEmpty<Duel>(SeedDuelsAsync, ct);
-                await SeedIfEmpty<DuelParticipant>(SeedDuelParticipantsAsync, ct);
-                await SeedIfEmpty<DuelRound>(SeedDuelRoundsAsync, ct);
+            await SeedIfEmpty<AiTemplate>(SeedAiTemplatesAsync, ct);
 
-                await SeedIfEmpty<UnlockRule>(SeedUnlockRulesAsync, ct);
-                await SeedIfEmpty<UserProgress>(SeedUserProgressAsync, ct);
+            await SeedIfEmpty<Attempt>(SeedAttemptsAsync, ct);
+            await SeedIfEmpty<Response>(SeedResponsesAsync, ct);
 
-                await SeedIfEmpty<AiGeneration>(SeedAiGenerationsAsync, ct);
+            await SeedIfEmpty<Duel>(SeedDuelsAsync, ct);
+            await SeedIfEmpty<DuelParticipant>(SeedDuelParticipantsAsync, ct);
+            await SeedIfEmpty<DuelRound>(SeedDuelRoundsAsync, ct);
 
-                await tx.CommitAsync(ct);
-            }
+            await SeedIfEmpty<UnlockRule>(SeedUnlockRulesAsync, ct);
+            await SeedIfEmpty<UserProgress>(SeedUserProgressAsync, ct);
 
-         
-            private async Task SeedIfEmpty<TEntity>(Func<Task> seedFunc, CancellationToken ct = default)
+            await SeedIfEmpty<AiGeneration>(SeedAiGenerationsAsync, ct);
+
+            await tx.CommitAsync(ct);
+        }
+
+
+
+        private async Task SeedIfEmpty<TEntity>(Func<Task> seedFunc, CancellationToken ct = default)
                 where TEntity : class
             {
                 if (await _context.Set<TEntity>().AnyAsync(ct))
@@ -84,7 +86,41 @@ namespace FrageFejden.Data
                 await _context.SaveChangesAsync(ct);
             }
 
-    
+
+        private async Task SeedClassSubjectsAsync(CancellationToken ct = default)
+        {
+            // 9B class id from your seed data
+            var class9BId = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd");
+
+            // Subject ids from your SeedSubjectsAsync
+            var subjectIds = new[]
+            {
+                Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"), 
+                Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"), 
+                Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc"), 
+            };
+
+            var class9B = await _context.Set<Class>()
+                .Include(c => c.Subjects)
+                .FirstOrDefaultAsync(c => c.Id == class9BId, ct);
+
+            if (class9B is null)
+                return; 
+
+            
+            var existingIds = class9B.Subjects.Select(s => s.Id).ToHashSet();
+            var subjectsToAttach = await _context.Set<Subject>()
+                .Where(s => subjectIds.Contains(s.Id) && !existingIds.Contains(s.Id))
+                .ToListAsync(ct);
+
+            if (subjectsToAttach.Count == 0)
+                return;
+
+            foreach (var subject in subjectsToAttach)
+                class9B.Subjects.Add(subject);
+
+            await _context.SaveChangesAsync(ct);
+        }
 
         private async Task SeedUsersAsync()
         {
@@ -244,29 +280,72 @@ namespace FrageFejden.Data
 
         private async Task SeedClassesAsync()
         {
-            var classes = new[]
+            var teacherId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+
+            var class9B = new Class
             {
-                new Class
-                {
-                    Id = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd"),
-                    Name = "Math 101",
-                    GradeLabel = "Grade 9",
-                    JoinCode = "MATH101",
-                    CreatedById = Guid.Parse("11111111-1111-1111-1111-111111111111"),
-                    CreatedAt = DateTime.UtcNow.AddMonths(-4)
-                },
-                new Class
-                {
-                    Id = Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"),
-                    Name = "Science Explorers",
-                    GradeLabel = "Grade 8",
-                    JoinCode = "SCI8EX",
-                    CreatedById = Guid.Parse("11111111-1111-1111-1111-111111111111"),
-                    CreatedAt = DateTime.UtcNow.AddMonths(-3)
-                }
+                Id = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd"),
+                Name = "9B",
+                GradeLabel = "Grade 9",
+                JoinCode = "MATH101",
+                CreatedById = teacherId,
+                CreatedAt = DateTime.UtcNow.AddMonths(-4),
+
+                // ⬇️ Subjects “inside” the class (aggregate-root style)
+                Subjects =
+        {
+            new Subject
+            {
+                Id = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+                Name = "Mathematics",
+                Description = "Comprehensive mathematics curriculum",
+                CreatedById = teacherId,
+                CreatedAt = DateTime.UtcNow.AddMonths(-5)
+            },
+            new Subject
+            {
+                Id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+                Name = "Science",
+                Description = "General science topics",
+                CreatedById = teacherId,
+                CreatedAt = DateTime.UtcNow.AddMonths(-4)
+            },
+            new Subject
+            {
+                Id = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc"),
+                Name = "History",
+                Description = "World and local history",
+                CreatedById = Guid.Parse("44444444-4444-4444-4444-444444444444"), // admin in your seed
+                CreatedAt = DateTime.UtcNow.AddMonths(-3)
+            }
+        }
             };
 
-            _context.Set<Class>().AddRange(classes);
+            var class9C = new Class
+            {
+                Id = Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"),
+                Name = "9C",
+                GradeLabel = "Grade 8",
+                JoinCode = "SCI8EX",
+                CreatedById = teacherId,
+                CreatedAt = DateTime.UtcNow.AddMonths(-3),
+
+                // You can give 9C its own set (or reuse some)
+                Subjects =
+        {
+            // Example: just Science for 9C
+            new Subject
+            {
+                Id = Guid.NewGuid(), // different subject instance for 9C
+                Name = "Science",
+                Description = "Science for Grade 8",
+                CreatedById = teacherId,
+                CreatedAt = DateTime.UtcNow.AddMonths(-3)
+            }
+        }
+            };
+
+            _context.Set<Class>().AddRange(class9B, class9C);
         }
 
         private async Task SeedClassMembershipsAsync()
