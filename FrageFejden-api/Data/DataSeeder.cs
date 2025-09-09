@@ -142,38 +142,38 @@ namespace FrageFejden.Data
             }
         }
 
-        //private async Task SeedSubjectsAsync()
-        //{
-        //    var subjects = new[]
-        //    {
-        //        new Subject
-        //        {
-        //            Id = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
-        //            Name = "Mathematics",
-        //            Description = "Comprehensive mathematics curriculum",
-        //            CreatedById = Guid.Parse("11111111-1111-1111-1111-111111111111"),
-        //            CreatedAt = DateTime.UtcNow.AddMonths(-5)
-        //        },
-        //        new Subject
-        //        {
-        //            Id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-        //            Name = "Science",
-        //            Description = "General science topics",
-        //            CreatedById = Guid.Parse("11111111-1111-1111-1111-111111111111"),
-        //            CreatedAt = DateTime.UtcNow.AddMonths(-4)
-        //        },
-        //        new Subject
-        //        {
-        //            Id = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc"),
-        //            Name = "History",
-        //            Description = "World and local history",
-        //            CreatedById = Guid.Parse("44444444-4444-4444-4444-444444444444"),
-        //            CreatedAt = DateTime.UtcNow.AddMonths(-3)
-        //        }
-        //    };
+        private async Task SeedSubjectsAsync()
+        {
+            var subjects = new[]
+            {
+                new Subject
+                {
+                    Id = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+                    Name = "Mathematics",
+                    Description = "Comprehensive mathematics curriculum",
+                    CreatedById = Guid.Parse("11111111-1111-1111-1111-111111111111"),
+                    CreatedAt = DateTime.UtcNow.AddMonths(-5)
+                },
+                new Subject
+                {
+                    Id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+                    Name = "Science",
+                    Description = "General science topics",
+                    CreatedById = Guid.Parse("11111111-1111-1111-1111-111111111111"),
+                    CreatedAt = DateTime.UtcNow.AddMonths(-4)
+                },
+                new Subject
+                {
+                    Id = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc"),
+                    Name = "History",
+                    Description = "World and local history",
+                    CreatedById = Guid.Parse("44444444-4444-4444-4444-444444444444"),
+                    CreatedAt = DateTime.UtcNow.AddMonths(-3)
+                }
+            };
 
-        //    _context.Set<Subject>().AddRange(subjects);
-        //}
+            _context.Set<Subject>().AddRange(subjects);
+        }
 
         private async Task SeedTopicsAsync()
         {
