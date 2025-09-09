@@ -114,7 +114,7 @@ builder.Services.AddSwaggerGen(c =>
 
 // Jwt token factory
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
-builder.Services.AddScoped<ISubjectService, SubjectService>();
+//builder.Services.AddScoped<ISubjectService, SubjectService>();
 builder.Services.AddScoped<IClassService, ClassService>();
 builder.Services.AddScoped<IDuelService, DuelService>();
 builder.Services.AddScoped<DailyQuestionService>();

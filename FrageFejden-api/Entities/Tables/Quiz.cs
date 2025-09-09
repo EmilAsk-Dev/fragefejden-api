@@ -25,7 +25,7 @@ namespace FrageFejden.Entities
         public Level? Level { get; set; }
         public Class? Class { get; set; }
 
-        public AppUser? CreatedBy { get; set; }  // Made nullable to match CreatedById
+        public AppUser? CreatedBy { get; set; }  
         public ICollection<QuizQuestion> QuizQuestions { get; set; } = new List<QuizQuestion>();
         public ICollection<Attempt> Attempts { get; set; } = new List<Attempt>();
     }

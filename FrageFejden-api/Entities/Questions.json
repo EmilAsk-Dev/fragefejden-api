@@ -1,40 +1,40 @@
 [
   {
     "category": "Svenska",
-    "question": "Vilket ord är en synonym till 'glad'?",
+    "question": "Vilket ord ï¿½r en synonym till 'glad'?",
     "alternativ": [
       "Arg",
       "Lycklig",
-      "Trött",
+      "Trï¿½tt",
       "Ledsen"
     ],
     "ratt_svar": "Lycklig"
   },
   {
     "category": "Engelska",
-    "question": "Vad betyder 'apple' på svenska?",
+    "question": "Vad betyder 'apple' pï¿½ svenska?",
     "alternativ": [
       "Apelsin",
-      "Päron",
-      "Äpple",
+      "Pï¿½ron",
+      "ï¿½pple",
       "Banan"
     ],
-    "ratt_svar": "Äpple"
+    "ratt_svar": "ï¿½pple"
   },
   {
     "category": "Svenska",
-    "question": "Vilket ord är en synonym till 'glad'?",
+    "question": "Vilket ord ï¿½r en synonym till 'glad'?",
     "alternativ": [
       "Arg",
       "Lycklig",
-      "Trött",
+      "Trï¿½tt",
       "Ledsen"
     ],
     "ratt_svar": "Lycklig"
   },
   {
     "category": "Engelska",
-    "question": "Vilket är rätt stavning?",
+    "question": "Vilket ï¿½r rï¿½tt stavning?",
     "alternativ": [
       "Hous",
       "House",
@@ -49,14 +49,14 @@
     "alternativ": [
       "Motsatsord",
       "Liknande ord",
-      "Långt ord",
+      "Lï¿½ngt ord",
       "Kort ord"
     ],
     "ratt_svar": "Motsatsord"
   },
   {
     "category": "Matematik",
-    "question": "Vilket tal är ett primtal?",
+    "question": "Vilket tal ï¿½r ett primtal?",
     "alternativ": [
       "21",
       "29",
@@ -67,7 +67,7 @@
   },
   {
     "category": "Naturvetenskap",
-    "question": "Hur många planeter finns i solsystemet?",
+    "question": "Hur mï¿½nga planeter finns i solsystemet?",
     "alternativ": [
       "7",
       "8",
@@ -78,7 +78,7 @@
   },
   {
     "category": "Historia",
-    "question": "Vem var Sveriges kung år 1700?",
+    "question": "Vem var Sveriges kung ï¿½r 1700?",
     "alternativ": [
       "Gustav Vasa",
       "Karl XII",
@@ -89,7 +89,7 @@
   },
   {
     "category": "Naturvetenskap",
-    "question": "Hur många planeter finns i solsystemet?",
+    "question": "Hur mï¿½nga planeter finns i solsystemet?",
     "alternativ": [
       "7",
       "8",
@@ -100,40 +100,40 @@
   },
   {
     "category": "Engelska",
-    "question": "Vad betyder 'apple' på svenska?",
+    "question": "Vad betyder 'apple' pï¿½ svenska?",
     "alternativ": [
       "Apelsin",
-      "Päron",
-      "Äpple",
+      "Pï¿½ron",
+      "ï¿½pple",
       "Banan"
     ],
-    "ratt_svar": "Äpple"
+    "ratt_svar": "ï¿½pple"
   },
   {
     "category": "Naturvetenskap",
     "question": "Vilket organ pumpar blodet i kroppen?",
     "alternativ": [
-      "Hjärnan",
-      "Hjärtat",
+      "Hjï¿½rnan",
+      "Hjï¿½rtat",
       "Magen",
       "Lungan"
     ],
-    "ratt_svar": "Hjärtat"
+    "ratt_svar": "Hjï¿½rtat"
   },
   {
     "category": "Naturvetenskap",
     "question": "Vilket organ pumpar blodet i kroppen?",
     "alternativ": [
-      "Hjärnan",
-      "Hjärtat",
+      "Hjï¿½rnan",
+      "Hjï¿½rtat",
       "Magen",
       "Lungan"
     ],
-    "ratt_svar": "Hjärtat"
+    "ratt_svar": "Hjï¿½rtat"
   },
   {
     "category": "Svenska",
-    "question": "Vilken är en vokal?",
+    "question": "Vilken ï¿½r en vokal?",
     "alternativ": [
       "B",
       "C",
@@ -144,29 +144,29 @@
   },
   {
     "category": "Svenska",
-    "question": "Vilket ord är en synonym till 'glad'?",
+    "question": "Vilket ord ï¿½r en synonym till 'glad'?",
     "alternativ": [
       "Arg",
       "Lycklig",
-      "Trött",
+      "Trï¿½tt",
       "Ledsen"
     ],
     "ratt_svar": "Lycklig"
   },
   {
     "category": "Naturvetenskap",
-    "question": "Vilket grundämne har kemiska beteckningen O?",
+    "question": "Vilket grundï¿½mne har kemiska beteckningen O?",
     "alternativ": [
       "Syre",
-      "Väte",
-      "Kväve",
+      "Vï¿½te",
+      "Kvï¿½ve",
       "Kol"
     ],
     "ratt_svar": "Syre"
   },
   {
     "category": "Historia",
-    "question": "Vem var Sveriges kung år 1700?",
+    "question": "Vem var Sveriges kung ï¿½r 1700?",
     "alternativ": [
       "Gustav Vasa",
       "Karl XII",
@@ -177,7 +177,7 @@
   },
   {
     "category": "Matematik",
-    "question": "Vad är kvadratroten av 81?",
+    "question": "Vad ï¿½r kvadratroten av 81?",
     "alternativ": [
       "7",
       "8",
@@ -188,7 +188,7 @@
   },
   {
     "category": "Historia",
-    "question": "När började andra världskriget?",
+    "question": "Nï¿½r bï¿½rjade andra vï¿½rldskriget?",
     "alternativ": [
       "1914",
       "1939",
@@ -199,7 +199,7 @@
   },
   {
     "category": "Geografi",
-    "question": "Vilket land är störst till ytan?",
+    "question": "Vilket land ï¿½r stï¿½rst till ytan?",
     "alternativ": [
       "Kina",
       "Ryssland",
@@ -214,14 +214,14 @@
     "alternativ": [
       "Motsatsord",
       "Liknande ord",
-      "Långt ord",
+      "Lï¿½ngt ord",
       "Kort ord"
     ],
     "ratt_svar": "Motsatsord"
   },
   {
     "category": "Geografi",
-    "question": "Vilket land är störst till ytan?",
+    "question": "Vilket land ï¿½r stï¿½rst till ytan?",
     "alternativ": [
       "Kina",
       "Ryssland",
@@ -236,36 +236,36 @@
     "alternativ": [
       "Motsatsord",
       "Liknande ord",
-      "Långt ord",
+      "Lï¿½ngt ord",
       "Kort ord"
     ],
     "ratt_svar": "Motsatsord"
   },
   {
     "category": "Geografi",
-    "question": "Vilken är Sveriges huvudstad?",
+    "question": "Vilken ï¿½r Sveriges huvudstad?",
     "alternativ": [
       "Oslo",
       "Helsingfors",
-      "Köpenhamn",
+      "Kï¿½penhamn",
       "Stockholm"
     ],
     "ratt_svar": "Stockholm"
   },
   {
     "category": "Geografi",
-    "question": "Vilket hav ligger öster om Sverige?",
+    "question": "Vilket hav ligger ï¿½ster om Sverige?",
     "alternativ": [
       "Atlanten",
-      "Östersjön",
+      "ï¿½stersjï¿½n",
       "Medelhavet",
       "Stilla havet"
     ],
-    "ratt_svar": "Östersjön"
+    "ratt_svar": "ï¿½stersjï¿½n"
   },
   {
     "category": "Matematik",
-    "question": "Vad är 12 * 8?",
+    "question": "Vad ï¿½r 12 * 8?",
     "alternativ": [
       "96",
       "108",
@@ -280,14 +280,14 @@
     "alternativ": [
       "Motsatsord",
       "Liknande ord",
-      "Långt ord",
+      "Lï¿½ngt ord",
       "Kort ord"
     ],
     "ratt_svar": "Motsatsord"
   },
   {
     "category": "Svenska",
-    "question": "Vilken är en vokal?",
+    "question": "Vilken ï¿½r en vokal?",
     "alternativ": [
       "B",
       "C",
@@ -298,7 +298,7 @@
   },
   {
     "category": "Naturvetenskap",
-    "question": "Hur många planeter finns i solsystemet?",
+    "question": "Hur mï¿½nga planeter finns i solsystemet?",
     "alternativ": [
       "7",
       "8",
@@ -309,11 +309,11 @@
   },
   {
     "category": "Svenska",
-    "question": "Vilket ord är en synonym till 'glad'?",
+    "question": "Vilket ord ï¿½r en synonym till 'glad'?",
     "alternativ": [
       "Arg",
       "Lycklig",
-      "Trött",
+      "Trï¿½tt",
       "Ledsen"
     ],
     "ratt_svar": "Lycklig"
@@ -322,16 +322,16 @@
     "category": "Naturvetenskap",
     "question": "Vilket organ pumpar blodet i kroppen?",
     "alternativ": [
-      "Hjärnan",
-      "Hjärtat",
+      "Hjï¿½rnan",
+      "Hjï¿½rtat",
       "Magen",
       "Lungan"
     ],
-    "ratt_svar": "Hjärtat"
+    "ratt_svar": "Hjï¿½rtat"
   },
   {
     "category": "Matematik",
-    "question": "Vad är kvadratroten av 81?",
+    "question": "Vad ï¿½r kvadratroten av 81?",
     "alternativ": [
       "7",
       "8",
@@ -342,29 +342,29 @@
   },
   {
     "category": "Engelska",
-    "question": "Vad betyder 'apple' på svenska?",
+    "question": "Vad betyder 'apple' pï¿½ svenska?",
     "alternativ": [
       "Apelsin",
-      "Päron",
-      "Äpple",
+      "Pï¿½ron",
+      "ï¿½pple",
       "Banan"
     ],
-    "ratt_svar": "Äpple"
+    "ratt_svar": "ï¿½pple"
   },
   {
     "category": "Engelska",
     "question": "Vad betyder 'quick'?",
     "alternativ": [
-      "Långsam",
+      "Lï¿½ngsam",
       "Snabb",
-      "Trött",
+      "Trï¿½tt",
       "Glad"
     ],
     "ratt_svar": "Snabb"
   },
   {
     "category": "Engelska",
-    "question": "Vilket är rätt stavning?",
+    "question": "Vilket ï¿½r rï¿½tt stavning?",
     "alternativ": [
       "Hous",
       "House",
@@ -375,7 +375,7 @@
   },
   {
     "category": "Svenska",
-    "question": "Vilken är en vokal?",
+    "question": "Vilken ï¿½r en vokal?",
     "alternativ": [
       "B",
       "C",
@@ -386,7 +386,7 @@
   },
   {
     "category": "Matematik",
-    "question": "Vad är 12 * 8?",
+    "question": "Vad ï¿½r 12 * 8?",
     "alternativ": [
       "96",
       "108",
@@ -397,7 +397,7 @@
   },
   {
     "category": "Geografi",
-    "question": "Vilket land är störst till ytan?",
+    "question": "Vilket land ï¿½r stï¿½rst till ytan?",
     "alternativ": [
       "Kina",
       "Ryssland",
@@ -408,7 +408,7 @@
   },
   {
     "category": "Svenska",
-    "question": "Vilken är en vokal?",
+    "question": "Vilken ï¿½r en vokal?",
     "alternativ": [
       "B",
       "C",
@@ -419,18 +419,18 @@
   },
   {
     "category": "Naturvetenskap",
-    "question": "Vilket grundämne har kemiska beteckningen O?",
+    "question": "Vilket grundï¿½mne har kemiska beteckningen O?",
     "alternativ": [
       "Syre",
-      "Väte",
-      "Kväve",
+      "Vï¿½te",
+      "Kvï¿½ve",
       "Kol"
     ],
     "ratt_svar": "Syre"
   },
   {
     "category": "Svenska",
-    "question": "Vilken är en vokal?",
+    "question": "Vilken ï¿½r en vokal?",
     "alternativ": [
       "B",
       "C",
@@ -441,7 +441,7 @@
   },
   {
     "category": "Svenska",
-    "question": "Vilken är en vokal?",
+    "question": "Vilken ï¿½r en vokal?",
     "alternativ": [
       "B",
       "C",
@@ -452,7 +452,7 @@
   },
   {
     "category": "Naturvetenskap",
-    "question": "Hur många planeter finns i solsystemet?",
+    "question": "Hur mï¿½nga planeter finns i solsystemet?",
     "alternativ": [
       "7",
       "8",
@@ -463,7 +463,7 @@
   },
   {
     "category": "Svenska",
-    "question": "Vilken är en vokal?",
+    "question": "Vilken ï¿½r en vokal?",
     "alternativ": [
       "B",
       "C",
@@ -478,29 +478,29 @@
     "alternativ": [
       "Motsatsord",
       "Liknande ord",
-      "Långt ord",
+      "Lï¿½ngt ord",
       "Kort ord"
     ],
     "ratt_svar": "Motsatsord"
   },
   {
     "category": "Geografi",
-    "question": "Vilken är Sveriges huvudstad?",
+    "question": "Vilken ï¿½r Sveriges huvudstad?",
     "alternativ": [
       "Oslo",
       "Helsingfors",
-      "Köpenhamn",
+      "Kï¿½penhamn",
       "Stockholm"
     ],
     "ratt_svar": "Stockholm"
   },
   {
     "category": "Svenska",
-    "question": "Vilket ord är en synonym till 'glad'?",
+    "question": "Vilket ord ï¿½r en synonym till 'glad'?",
     "alternativ": [
       "Arg",
       "Lycklig",
-      "Trött",
+      "Trï¿½tt",
       "Ledsen"
     ],
     "ratt_svar": "Lycklig"
@@ -509,34 +509,34 @@
     "category": "Naturvetenskap",
     "question": "Vilket organ pumpar blodet i kroppen?",
     "alternativ": [
-      "Hjärnan",
-      "Hjärtat",
+      "Hjï¿½rnan",
+      "Hjï¿½rtat",
       "Magen",
       "Lungan"
     ],
-    "ratt_svar": "Hjärtat"
+    "ratt_svar": "Hjï¿½rtat"
   },
   {
     "category": "Engelska",
     "question": "Vad betyder 'quick'?",
     "alternativ": [
-      "Långsam",
+      "Lï¿½ngsam",
       "Snabb",
-      "Trött",
+      "Trï¿½tt",
       "Glad"
     ],
     "ratt_svar": "Snabb"
   },
   {
     "category": "Engelska",
-    "question": "Vad betyder 'apple' på svenska?",
+    "question": "Vad betyder 'apple' pï¿½ svenska?",
     "alternativ": [
       "Apelsin",
-      "Päron",
-      "Äpple",
+      "Pï¿½ron",
+      "ï¿½pple",
       "Banan"
     ],
-    "ratt_svar": "Äpple"
+    "ratt_svar": "ï¿½pple"
   },
   {
     "category": "Svenska",
@@ -544,47 +544,47 @@
     "alternativ": [
       "Motsatsord",
       "Liknande ord",
-      "Långt ord",
+      "Lï¿½ngt ord",
       "Kort ord"
     ],
     "ratt_svar": "Motsatsord"
   },
   {
     "category": "Engelska",
-    "question": "Vad betyder 'apple' på svenska?",
+    "question": "Vad betyder 'apple' pï¿½ svenska?",
     "alternativ": [
       "Apelsin",
-      "Päron",
-      "Äpple",
+      "Pï¿½ron",
+      "ï¿½pple",
       "Banan"
     ],
-    "ratt_svar": "Äpple"
+    "ratt_svar": "ï¿½pple"
   },
   {
     "category": "Geografi",
-    "question": "Vilket hav ligger öster om Sverige?",
+    "question": "Vilket hav ligger ï¿½ster om Sverige?",
     "alternativ": [
       "Atlanten",
-      "Östersjön",
+      "ï¿½stersjï¿½n",
       "Medelhavet",
       "Stilla havet"
     ],
-    "ratt_svar": "Östersjön"
+    "ratt_svar": "ï¿½stersjï¿½n"
   },
   {
     "category": "Engelska",
     "question": "Vad betyder 'quick'?",
     "alternativ": [
-      "Långsam",
+      "Lï¿½ngsam",
       "Snabb",
-      "Trött",
+      "Trï¿½tt",
       "Glad"
     ],
     "ratt_svar": "Snabb"
   },
   {
     "category": "Engelska",
-    "question": "Vilket är rätt stavning?",
+    "question": "Vilket ï¿½r rï¿½tt stavning?",
     "alternativ": [
       "Hous",
       "House",
@@ -595,18 +595,18 @@
   },
   {
     "category": "Svenska",
-    "question": "Vilket ord är en synonym till 'glad'?",
+    "question": "Vilket ord ï¿½r en synonym till 'glad'?",
     "alternativ": [
       "Arg",
       "Lycklig",
-      "Trött",
+      "Trï¿½tt",
       "Ledsen"
     ],
     "ratt_svar": "Lycklig"
   },
   {
     "category": "Matematik",
-    "question": "Vilket tal är ett primtal?",
+    "question": "Vilket tal ï¿½r ett primtal?",
     "alternativ": [
       "21",
       "29",
@@ -617,7 +617,7 @@
   },
   {
     "category": "Svenska",
-    "question": "Vilken är en vokal?",
+    "question": "Vilken ï¿½r en vokal?",
     "alternativ": [
       "B",
       "C",
@@ -630,27 +630,27 @@
     "category": "Engelska",
     "question": "Vad betyder 'quick'?",
     "alternativ": [
-      "Långsam",
+      "Lï¿½ngsam",
       "Snabb",
-      "Trött",
+      "Trï¿½tt",
       "Glad"
     ],
     "ratt_svar": "Snabb"
   },
   {
     "category": "Naturvetenskap",
-    "question": "Vilket grundämne har kemiska beteckningen O?",
+    "question": "Vilket grundï¿½mne har kemiska beteckningen O?",
     "alternativ": [
       "Syre",
-      "Väte",
-      "Kväve",
+      "Vï¿½te",
+      "Kvï¿½ve",
       "Kol"
     ],
     "ratt_svar": "Syre"
   },
   {
     "category": "Historia",
-    "question": "Vem var Sveriges kung år 1700?",
+    "question": "Vem var Sveriges kung ï¿½r 1700?",
     "alternativ": [
       "Gustav Vasa",
       "Karl XII",
@@ -663,7 +663,7 @@
     "category": "Historia",
     "question": "Vad kallades vikingarnas skepp?",
     "alternativ": [
-      "Båtar",
+      "Bï¿½tar",
       "Drakskepp",
       "Lastfartyg",
       "Galeoner"
@@ -672,7 +672,7 @@
   },
   {
     "category": "Matematik",
-    "question": "Vilket tal är ett primtal?",
+    "question": "Vilket tal ï¿½r ett primtal?",
     "alternativ": [
       "21",
       "29",
@@ -683,7 +683,7 @@
   },
   {
     "category": "Historia",
-    "question": "När började andra världskriget?",
+    "question": "Nï¿½r bï¿½rjade andra vï¿½rldskriget?",
     "alternativ": [
       "1914",
       "1939",
@@ -698,14 +698,14 @@
     "alternativ": [
       "Motsatsord",
       "Liknande ord",
-      "Långt ord",
+      "Lï¿½ngt ord",
       "Kort ord"
     ],
     "ratt_svar": "Motsatsord"
   },
   {
     "category": "Svenska",
-    "question": "Vilken är en vokal?",
+    "question": "Vilken ï¿½r en vokal?",
     "alternativ": [
       "B",
       "C",
@@ -720,14 +720,14 @@
     "alternativ": [
       "Motsatsord",
       "Liknande ord",
-      "Långt ord",
+      "Lï¿½ngt ord",
       "Kort ord"
     ],
     "ratt_svar": "Motsatsord"
   },
   {
     "category": "Geografi",
-    "question": "Vilket land är störst till ytan?",
+    "question": "Vilket land ï¿½r stï¿½rst till ytan?",
     "alternativ": [
       "Kina",
       "Ryssland",
@@ -740,16 +740,16 @@
     "category": "Engelska",
     "question": "Vad betyder 'quick'?",
     "alternativ": [
-      "Långsam",
+      "Lï¿½ngsam",
       "Snabb",
-      "Trött",
+      "Trï¿½tt",
       "Glad"
     ],
     "ratt_svar": "Snabb"
   },
   {
     "category": "Svenska",
-    "question": "Vilken är en vokal?",
+    "question": "Vilken ï¿½r en vokal?",
     "alternativ": [
       "B",
       "C",
@@ -762,7 +762,7 @@
     "category": "Historia",
     "question": "Vad kallades vikingarnas skepp?",
     "alternativ": [
-      "Båtar",
+      "Bï¿½tar",
       "Drakskepp",
       "Lastfartyg",
       "Galeoner"
@@ -771,7 +771,7 @@
   },
   {
     "category": "Svenska",
-    "question": "Vilken är en vokal?",
+    "question": "Vilken ï¿½r en vokal?",
     "alternativ": [
       "B",
       "C",
@@ -782,7 +782,7 @@
   },
   {
     "category": "Geografi",
-    "question": "Vilket land är störst till ytan?",
+    "question": "Vilket land ï¿½r stï¿½rst till ytan?",
     "alternativ": [
       "Kina",
       "Ryssland",
@@ -793,18 +793,18 @@
   },
   {
     "category": "Svenska",
-    "question": "Vilket ord är en synonym till 'glad'?",
+    "question": "Vilket ord ï¿½r en synonym till 'glad'?",
     "alternativ": [
       "Arg",
       "Lycklig",
-      "Trött",
+      "Trï¿½tt",
       "Ledsen"
     ],
     "ratt_svar": "Lycklig"
   },
   {
     "category": "Svenska",
-    "question": "Vilken är en vokal?",
+    "question": "Vilken ï¿½r en vokal?",
     "alternativ": [
       "B",
       "C",
@@ -815,7 +815,7 @@
   },
   {
     "category": "Engelska",
-    "question": "Vilket är rätt stavning?",
+    "question": "Vilket ï¿½r rï¿½tt stavning?",
     "alternativ": [
       "Hous",
       "House",
@@ -826,11 +826,11 @@
   },
   {
     "category": "Geografi",
-    "question": "Vilken är Sveriges huvudstad?",
+    "question": "Vilken ï¿½r Sveriges huvudstad?",
     "alternativ": [
       "Oslo",
       "Helsingfors",
-      "Köpenhamn",
+      "Kï¿½penhamn",
       "Stockholm"
     ],
     "ratt_svar": "Stockholm"
@@ -839,9 +839,9 @@
     "category": "Engelska",
     "question": "Vad betyder 'quick'?",
     "alternativ": [
-      "Långsam",
+      "Lï¿½ngsam",
       "Snabb",
-      "Trött",
+      "Trï¿½tt",
       "Glad"
     ],
     "ratt_svar": "Snabb"
@@ -852,14 +852,14 @@
     "alternativ": [
       "Motsatsord",
       "Liknande ord",
-      "Långt ord",
+      "Lï¿½ngt ord",
       "Kort ord"
     ],
     "ratt_svar": "Motsatsord"
   },
   {
     "category": "Matematik",
-    "question": "Vilket tal är ett primtal?",
+    "question": "Vilket tal ï¿½r ett primtal?",
     "alternativ": [
       "21",
       "29",
@@ -870,7 +870,7 @@
   },
   {
     "category": "Matematik",
-    "question": "Vilket tal är ett primtal?",
+    "question": "Vilket tal ï¿½r ett primtal?",
     "alternativ": [
       "21",
       "29",
@@ -881,7 +881,7 @@
   },
   {
     "category": "Historia",
-    "question": "När började andra världskriget?",
+    "question": "Nï¿½r bï¿½rjade andra vï¿½rldskriget?",
     "alternativ": [
       "1914",
       "1939",
@@ -894,16 +894,16 @@
     "category": "Naturvetenskap",
     "question": "Vilket organ pumpar blodet i kroppen?",
     "alternativ": [
-      "Hjärnan",
-      "Hjärtat",
+      "Hjï¿½rnan",
+      "Hjï¿½rtat",
       "Magen",
       "Lungan"
     ],
-    "ratt_svar": "Hjärtat"
+    "ratt_svar": "Hjï¿½rtat"
   },
   {
     "category": "Engelska",
-    "question": "Vilket är rätt stavning?",
+    "question": "Vilket ï¿½r rï¿½tt stavning?",
     "alternativ": [
       "Hous",
       "House",
@@ -914,7 +914,7 @@
   },
   {
     "category": "Historia",
-    "question": "När började andra världskriget?",
+    "question": "Nï¿½r bï¿½rjade andra vï¿½rldskriget?",
     "alternativ": [
       "1914",
       "1939",
@@ -927,18 +927,18 @@
     "category": "Naturvetenskap",
     "question": "Vilket organ pumpar blodet i kroppen?",
     "alternativ": [
-      "Hjärnan",
-      "Hjärtat",
+      "Hjï¿½rnan",
+      "Hjï¿½rtat",
       "Magen",
       "Lungan"
     ],
-    "ratt_svar": "Hjärtat"
+    "ratt_svar": "Hjï¿½rtat"
   },
   {
     "category": "Historia",
     "question": "Vad kallades vikingarnas skepp?",
     "alternativ": [
-      "Båtar",
+      "Bï¿½tar",
       "Drakskepp",
       "Lastfartyg",
       "Galeoner"
@@ -947,7 +947,7 @@
   },
   {
     "category": "Matematik",
-    "question": "Vad är kvadratroten av 81?",
+    "question": "Vad ï¿½r kvadratroten av 81?",
     "alternativ": [
       "7",
       "8",
@@ -958,7 +958,7 @@
   },
   {
     "category": "Historia",
-    "question": "Vem var Sveriges kung år 1700?",
+    "question": "Vem var Sveriges kung ï¿½r 1700?",
     "alternativ": [
       "Gustav Vasa",
       "Karl XII",
@@ -969,7 +969,7 @@
   },
   {
     "category": "Matematik",
-    "question": "Vad är kvadratroten av 81?",
+    "question": "Vad ï¿½r kvadratroten av 81?",
     "alternativ": [
       "7",
       "8",
@@ -982,7 +982,7 @@
     "category": "Historia",
     "question": "Vad kallades vikingarnas skepp?",
     "alternativ": [
-      "Båtar",
+      "Bï¿½tar",
       "Drakskepp",
       "Lastfartyg",
       "Galeoner"
@@ -993,16 +993,16 @@
     "category": "Engelska",
     "question": "Vad betyder 'quick'?",
     "alternativ": [
-      "Långsam",
+      "Lï¿½ngsam",
       "Snabb",
-      "Trött",
+      "Trï¿½tt",
       "Glad"
     ],
     "ratt_svar": "Snabb"
   },
   {
     "category": "Matematik",
-    "question": "Vilket tal är ett primtal?",
+    "question": "Vilket tal ï¿½r ett primtal?",
     "alternativ": [
       "21",
       "29",
@@ -1013,18 +1013,18 @@
   },
   {
     "category": "Engelska",
-    "question": "Vad betyder 'apple' på svenska?",
+    "question": "Vad betyder 'apple' pï¿½ svenska?",
     "alternativ": [
       "Apelsin",
-      "Päron",
-      "Äpple",
+      "Pï¿½ron",
+      "ï¿½pple",
       "Banan"
     ],
-    "ratt_svar": "Äpple"
+    "ratt_svar": "ï¿½pple"
   },
   {
     "category": "Historia",
-    "question": "När började andra världskriget?",
+    "question": "Nï¿½r bï¿½rjade andra vï¿½rldskriget?",
     "alternativ": [
       "1914",
       "1939",
@@ -1035,7 +1035,7 @@
   },
   {
     "category": "Svenska",
-    "question": "Vilken är en vokal?",
+    "question": "Vilken ï¿½r en vokal?",
     "alternativ": [
       "B",
       "C",
@@ -1050,7 +1050,7 @@
     "alternativ": [
       "Motsatsord",
       "Liknande ord",
-      "Långt ord",
+      "Lï¿½ngt ord",
       "Kort ord"
     ],
     "ratt_svar": "Motsatsord"
@@ -1059,7 +1059,7 @@
     "category": "Historia",
     "question": "Vad kallades vikingarnas skepp?",
     "alternativ": [
-      "Båtar",
+      "Bï¿½tar",
       "Drakskepp",
       "Lastfartyg",
       "Galeoner"
@@ -1068,7 +1068,7 @@
   },
   {
     "category": "Matematik",
-    "question": "Vilket tal är ett primtal?",
+    "question": "Vilket tal ï¿½r ett primtal?",
     "alternativ": [
       "21",
       "29",
@@ -1079,7 +1079,7 @@
   },
   {
     "category": "Svenska",
-    "question": "Vilken är en vokal?",
+    "question": "Vilken ï¿½r en vokal?",
     "alternativ": [
       "B",
       "C",
@@ -1090,20 +1090,20 @@
   },
   {
     "category": "Engelska",
-    "question": "Vad betyder 'apple' på svenska?",
+    "question": "Vad betyder 'apple' pï¿½ svenska?",
     "alternativ": [
       "Apelsin",
-      "Päron",
-      "Äpple",
+      "Pï¿½ron",
+      "ï¿½pple",
       "Banan"
     ],
-    "ratt_svar": "Äpple"
+    "ratt_svar": "ï¿½pple"
   },
   {
     "category": "Historia",
     "question": "Vad kallades vikingarnas skepp?",
     "alternativ": [
-      "Båtar",
+      "Bï¿½tar",
       "Drakskepp",
       "Lastfartyg",
       "Galeoner"
@@ -1112,18 +1112,18 @@
   },
   {
     "category": "Svenska",
-    "question": "Vilket ord är en synonym till 'glad'?",
+    "question": "Vilket ord ï¿½r en synonym till 'glad'?",
     "alternativ": [
       "Arg",
       "Lycklig",
-      "Trött",
+      "Trï¿½tt",
       "Ledsen"
     ],
     "ratt_svar": "Lycklig"
   },
   {
     "category": "Geografi",
-    "question": "Vilket land är störst till ytan?",
+    "question": "Vilket land ï¿½r stï¿½rst till ytan?",
     "alternativ": [
       "Kina",
       "Ryssland",
@@ -1134,7 +1134,7 @@
   },
   {
     "category": "Historia",
-    "question": "Vem var Sveriges kung år 1700?",
+    "question": "Vem var Sveriges kung ï¿½r 1700?",
     "alternativ": [
       "Gustav Vasa",
       "Karl XII",
@@ -1145,18 +1145,18 @@
   },
   {
     "category": "Naturvetenskap",
-    "question": "Vilket grundämne har kemiska beteckningen O?",
+    "question": "Vilket grundï¿½mne har kemiska beteckningen O?",
     "alternativ": [
       "Syre",
-      "Väte",
-      "Kväve",
+      "Vï¿½te",
+      "Kvï¿½ve",
       "Kol"
     ],
     "ratt_svar": "Syre"
   },
   {
     "category": "Geografi",
-    "question": "Vilket land är störst till ytan?",
+    "question": "Vilket land ï¿½r stï¿½rst till ytan?",
     "alternativ": [
       "Kina",
       "Ryssland",
@@ -1167,18 +1167,18 @@
   },
   {
     "category": "Naturvetenskap",
-    "question": "Vilket grundämne har kemiska beteckningen O?",
+    "question": "Vilket grundï¿½mne har kemiska beteckningen O?",
     "alternativ": [
       "Syre",
-      "Väte",
-      "Kväve",
+      "Vï¿½te",
+      "Kvï¿½ve",
       "Kol"
     ],
     "ratt_svar": "Syre"
   },
   {
     "category": "Engelska",
-    "question": "Vilket är rätt stavning?",
+    "question": "Vilket ï¿½r rï¿½tt stavning?",
     "alternativ": [
       "Hous",
       "House",
@@ -1189,14 +1189,14 @@
   },
   {
     "category": "Engelska",
-    "question": "Vad betyder 'apple' på svenska?",
+    "question": "Vad betyder 'apple' pï¿½ svenska?",
     "alternativ": [
       "Apelsin",
-      "Päron",
-      "Äpple",
+      "Pï¿½ron",
+      "ï¿½pple",
       "Banan"
     ],
-    "ratt_svar": "Äpple"
+    "ratt_svar": "ï¿½pple"
   },
   {
     "category": "Svenska",
@@ -1204,14 +1204,14 @@
     "alternativ": [
       "Motsatsord",
       "Liknande ord",
-      "Långt ord",
+      "Lï¿½ngt ord",
       "Kort ord"
     ],
     "ratt_svar": "Motsatsord"
   },
   {
     "category": "Historia",
-    "question": "När började andra världskriget?",
+    "question": "Nï¿½r bï¿½rjade andra vï¿½rldskriget?",
     "alternativ": [
       "1914",
       "1939",
@@ -1222,29 +1222,29 @@
   },
   {
     "category": "Geografi",
-    "question": "Vilket hav ligger öster om Sverige?",
+    "question": "Vilket hav ligger ï¿½ster om Sverige?",
     "alternativ": [
       "Atlanten",
-      "Östersjön",
+      "ï¿½stersjï¿½n",
       "Medelhavet",
       "Stilla havet"
     ],
-    "ratt_svar": "Östersjön"
+    "ratt_svar": "ï¿½stersjï¿½n"
   },
   {
     "category": "Naturvetenskap",
     "question": "Vilket organ pumpar blodet i kroppen?",
     "alternativ": [
-      "Hjärnan",
-      "Hjärtat",
+      "Hjï¿½rnan",
+      "Hjï¿½rtat",
       "Magen",
       "Lungan"
     ],
-    "ratt_svar": "Hjärtat"
+    "ratt_svar": "Hjï¿½rtat"
   },
   {
     "category": "Naturvetenskap",
-    "question": "Hur många planeter finns i solsystemet?",
+    "question": "Hur mï¿½nga planeter finns i solsystemet?",
     "alternativ": [
       "7",
       "8",
@@ -1259,80 +1259,80 @@
     "alternativ": [
       "Motsatsord",
       "Liknande ord",
-      "Långt ord",
+      "Lï¿½ngt ord",
       "Kort ord"
     ],
     "ratt_svar": "Motsatsord"
   },
   {
     "category": "Svenska",
-    "question": "Vilket ord är en synonym till 'glad'?",
+    "question": "Vilket ord ï¿½r en synonym till 'glad'?",
     "alternativ": [
       "Arg",
       "Lycklig",
-      "Trött",
+      "Trï¿½tt",
       "Ledsen"
     ],
     "ratt_svar": "Lycklig"
   },
   {
     "category": "Svenska",
-    "question": "Vilket ord är en synonym till 'glad'?",
+    "question": "Vilket ord ï¿½r en synonym till 'glad'?",
     "alternativ": [
       "Arg",
       "Lycklig",
-      "Trött",
+      "Trï¿½tt",
       "Ledsen"
     ],
     "ratt_svar": "Lycklig"
   },
   {
     "category": "Svenska",
-    "question": "Vilket ord är en synonym till 'glad'?",
+    "question": "Vilket ord ï¿½r en synonym till 'glad'?",
     "alternativ": [
       "Arg",
       "Lycklig",
-      "Trött",
+      "Trï¿½tt",
       "Ledsen"
     ],
     "ratt_svar": "Lycklig"
   },
   {
     "category": "Engelska",
-    "question": "Vad betyder 'apple' på svenska?",
+    "question": "Vad betyder 'apple' pï¿½ svenska?",
     "alternativ": [
       "Apelsin",
-      "Päron",
-      "Äpple",
+      "Pï¿½ron",
+      "ï¿½pple",
       "Banan"
     ],
-    "ratt_svar": "Äpple"
+    "ratt_svar": "ï¿½pple"
   },
   {
     "category": "Geografi",
-    "question": "Vilket hav ligger öster om Sverige?",
+    "question": "Vilket hav ligger ï¿½ster om Sverige?",
     "alternativ": [
       "Atlanten",
-      "Östersjön",
+      "ï¿½stersjï¿½n",
       "Medelhavet",
       "Stilla havet"
     ],
-    "ratt_svar": "Östersjön"
+    "ratt_svar": "ï¿½stersjï¿½n"
   },
   {
     "category": "Naturvetenskap",
     "question": "Vilket organ pumpar blodet i kroppen?",
     "alternativ": [
-      "Hjärnan",
-      "Hjärtat",
+      "Hjï¿½rnan",
+      "Hjï¿½rtat",
       "Magen",
       "Lungan"
     ],
-    "ratt_svar": "Hjärtat"
+    "ratt_svar": "Hjï¿½rtat"
   },
   {
     "category": "Matematik",
-    "question": "Vad är kvadratroten av 81?",
+    "question": "Vad ï¿½r kvadratroten av 81?",
     "alternativ": [
       "7",
       "8",
@@ -1343,29 +1343,29 @@
   },
   {
     "category": "Naturvetenskap",
-    "question": "Vilket grundämne har kemiska beteckningen O?",
+    "question": "Vilket grundï¿½mne har kemiska beteckningen O?",
     "alternativ": [
       "Syre",
-      "Väte",
-      "Kväve",
+      "Vï¿½te",
+      "Kvï¿½ve",
       "Kol"
     ],
     "ratt_svar": "Syre"
   },
   {
     "category": "Geografi",
-    "question": "Vilken är Sveriges huvudstad?",
+    "question": "Vilken ï¿½r Sveriges huvudstad?",
     "alternativ": [
       "Oslo",
       "Helsingfors",
-      "Köpenhamn",
+      "Kï¿½penhamn",
       "Stockholm"
     ],
     "ratt_svar": "Stockholm"
   },
   {
     "category": "Geografi",
-    "question": "Vilket land är störst till ytan?",
+    "question": "Vilket land ï¿½r stï¿½rst till ytan?",
     "alternativ": [
       "Kina",
       "Ryssland",
@@ -1376,29 +1376,29 @@
   },
   {
     "category": "Svenska",
-    "question": "Vilket ord är en synonym till 'glad'?",
+    "question": "Vilket ord ï¿½r en synonym till 'glad'?",
     "alternativ": [
       "Arg",
       "Lycklig",
-      "Trött",
+      "Trï¿½tt",
       "Ledsen"
     ],
     "ratt_svar": "Lycklig"
   },
   {
     "category": "Svenska",
-    "question": "Vilket ord är en synonym till 'glad'?",
+    "question": "Vilket ord ï¿½r en synonym till 'glad'?",
     "alternativ": [
       "Arg",
       "Lycklig",
-      "Trött",
+      "Trï¿½tt",
       "Ledsen"
     ],
     "ratt_svar": "Lycklig"
   },
   {
     "category": "Matematik",
-    "question": "Vad är 12 * 8?",
+    "question": "Vad ï¿½r 12 * 8?",
     "alternativ": [
       "96",
       "108",
@@ -1409,7 +1409,7 @@
   },
   {
     "category": "Naturvetenskap",
-    "question": "Hur många planeter finns i solsystemet?",
+    "question": "Hur mï¿½nga planeter finns i solsystemet?",
     "alternativ": [
       "7",
       "8",
@@ -1420,22 +1420,22 @@
   },
   {
     "category": "Svenska",
-    "question": "Vilket ord är en synonym till 'glad'?",
+    "question": "Vilket ord ï¿½r en synonym till 'glad'?",
     "alternativ": [
       "Arg",
       "Lycklig",
-      "Trött",
+      "Trï¿½tt",
       "Ledsen"
     ],
     "ratt_svar": "Lycklig"
   },
   {
     "category": "Naturvetenskap",
-    "question": "Vilket grundämne har kemiska beteckningen O?",
+    "question": "Vilket grundï¿½mne har kemiska beteckningen O?",
     "alternativ": [
       "Syre",
-      "Väte",
-      "Kväve",
+      "Vï¿½te",
+      "Kvï¿½ve",
       "Kol"
     ],
     "ratt_svar": "Syre"
@@ -1444,7 +1444,7 @@
     "category": "Historia",
     "question": "Vad kallades vikingarnas skepp?",
     "alternativ": [
-      "Båtar",
+      "Bï¿½tar",
       "Drakskepp",
       "Lastfartyg",
       "Galeoner"
@@ -1453,40 +1453,40 @@
   },
   {
     "category": "Geografi",
-    "question": "Vilken är Sveriges huvudstad?",
+    "question": "Vilken ï¿½r Sveriges huvudstad?",
     "alternativ": [
       "Oslo",
       "Helsingfors",
-      "Köpenhamn",
+      "Kï¿½penhamn",
       "Stockholm"
     ],
     "ratt_svar": "Stockholm"
   },
   {
     "category": "Geografi",
-    "question": "Vilken är Sveriges huvudstad?",
+    "question": "Vilken ï¿½r Sveriges huvudstad?",
     "alternativ": [
       "Oslo",
       "Helsingfors",
-      "Köpenhamn",
+      "Kï¿½penhamn",
       "Stockholm"
     ],
     "ratt_svar": "Stockholm"
   },
   {
     "category": "Geografi",
-    "question": "Vilken är Sveriges huvudstad?",
+    "question": "Vilken ï¿½r Sveriges huvudstad?",
     "alternativ": [
       "Oslo",
       "Helsingfors",
-      "Köpenhamn",
+      "Kï¿½penhamn",
       "Stockholm"
     ],
     "ratt_svar": "Stockholm"
   },
   {
     "category": "Matematik",
-    "question": "Vad är kvadratroten av 81?",
+    "question": "Vad ï¿½r kvadratroten av 81?",
     "alternativ": [
       "7",
       "8",
@@ -1497,18 +1497,18 @@
   },
   {
     "category": "Geografi",
-    "question": "Vilken är Sveriges huvudstad?",
+    "question": "Vilken ï¿½r Sveriges huvudstad?",
     "alternativ": [
       "Oslo",
       "Helsingfors",
-      "Köpenhamn",
+      "Kï¿½penhamn",
       "Stockholm"
     ],
     "ratt_svar": "Stockholm"
   },
   {
     "category": "Historia",
-    "question": "Vem var Sveriges kung år 1700?",
+    "question": "Vem var Sveriges kung ï¿½r 1700?",
     "alternativ": [
       "Gustav Vasa",
       "Karl XII",
@@ -1519,7 +1519,7 @@
   },
   {
     "category": "Matematik",
-    "question": "Vad är 12 * 8?",
+    "question": "Vad ï¿½r 12 * 8?",
     "alternativ": [
       "96",
       "108",
@@ -1530,7 +1530,7 @@
   },
   {
     "category": "Matematik",
-    "question": "Vilket tal är ett primtal?",
+    "question": "Vilket tal ï¿½r ett primtal?",
     "alternativ": [
       "21",
       "29",
@@ -1541,7 +1541,7 @@
   },
   {
     "category": "Naturvetenskap",
-    "question": "Hur många planeter finns i solsystemet?",
+    "question": "Hur mï¿½nga planeter finns i solsystemet?",
     "alternativ": [
       "7",
       "8",
@@ -1552,40 +1552,40 @@
   },
   {
     "category": "Engelska",
-    "question": "Vad betyder 'apple' på svenska?",
+    "question": "Vad betyder 'apple' pï¿½ svenska?",
     "alternativ": [
       "Apelsin",
-      "Päron",
-      "Äpple",
+      "Pï¿½ron",
+      "ï¿½pple",
       "Banan"
     ],
-    "ratt_svar": "Äpple"
+    "ratt_svar": "ï¿½pple"
   },
   {
     "category": "Naturvetenskap",
-    "question": "Vilket grundämne har kemiska beteckningen O?",
+    "question": "Vilket grundï¿½mne har kemiska beteckningen O?",
     "alternativ": [
       "Syre",
-      "Väte",
-      "Kväve",
+      "Vï¿½te",
+      "Kvï¿½ve",
       "Kol"
     ],
     "ratt_svar": "Syre"
   },
   {
     "category": "Geografi",
-    "question": "Vilken är Sveriges huvudstad?",
+    "question": "Vilken ï¿½r Sveriges huvudstad?",
     "alternativ": [
       "Oslo",
       "Helsingfors",
-      "Köpenhamn",
+      "Kï¿½penhamn",
       "Stockholm"
     ],
     "ratt_svar": "Stockholm"
   },
   {
     "category": "Svenska",
-    "question": "Vilken är en vokal?",
+    "question": "Vilken ï¿½r en vokal?",
     "alternativ": [
       "B",
       "C",
@@ -1596,18 +1596,18 @@
   },
   {
     "category": "Engelska",
-    "question": "Vad betyder 'apple' på svenska?",
+    "question": "Vad betyder 'apple' pï¿½ svenska?",
     "alternativ": [
       "Apelsin",
-      "Päron",
-      "Äpple",
+      "Pï¿½ron",
+      "ï¿½pple",
       "Banan"
     ],
-    "ratt_svar": "Äpple"
+    "ratt_svar": "ï¿½pple"
   },
   {
     "category": "Historia",
-    "question": "Vem var Sveriges kung år 1700?",
+    "question": "Vem var Sveriges kung ï¿½r 1700?",
     "alternativ": [
       "Gustav Vasa",
       "Karl XII",
@@ -1618,29 +1618,29 @@
   },
   {
     "category": "Svenska",
-    "question": "Vilket ord är en synonym till 'glad'?",
+    "question": "Vilket ord ï¿½r en synonym till 'glad'?",
     "alternativ": [
       "Arg",
       "Lycklig",
-      "Trött",
+      "Trï¿½tt",
       "Ledsen"
     ],
     "ratt_svar": "Lycklig"
   },
   {
     "category": "Naturvetenskap",
-    "question": "Vilket grundämne har kemiska beteckningen O?",
+    "question": "Vilket grundï¿½mne har kemiska beteckningen O?",
     "alternativ": [
       "Syre",
-      "Väte",
-      "Kväve",
+      "Vï¿½te",
+      "Kvï¿½ve",
       "Kol"
     ],
     "ratt_svar": "Syre"
   },
   {
     "category": "Matematik",
-    "question": "Vad är kvadratroten av 81?",
+    "question": "Vad ï¿½r kvadratroten av 81?",
     "alternativ": [
       "7",
       "8",
@@ -1653,16 +1653,16 @@
     "category": "Engelska",
     "question": "Vad betyder 'quick'?",
     "alternativ": [
-      "Långsam",
+      "Lï¿½ngsam",
       "Snabb",
-      "Trött",
+      "Trï¿½tt",
       "Glad"
     ],
     "ratt_svar": "Snabb"
   },
   {
     "category": "Historia",
-    "question": "Vem var Sveriges kung år 1700?",
+    "question": "Vem var Sveriges kung ï¿½r 1700?",
     "alternativ": [
       "Gustav Vasa",
       "Karl XII",
@@ -1673,7 +1673,7 @@
   },
   {
     "category": "Matematik",
-    "question": "Vad är kvadratroten av 81?",
+    "question": "Vad ï¿½r kvadratroten av 81?",
     "alternativ": [
       "7",
       "8",
@@ -1684,7 +1684,7 @@
   },
   {
     "category": "Historia",
-    "question": "Vem var Sveriges kung år 1700?",
+    "question": "Vem var Sveriges kung ï¿½r 1700?",
     "alternativ": [
       "Gustav Vasa",
       "Karl XII",
@@ -1695,7 +1695,7 @@
   },
   {
     "category": "Engelska",
-    "question": "Vilket är rätt stavning?",
+    "question": "Vilket ï¿½r rï¿½tt stavning?",
     "alternativ": [
       "Hous",
       "House",
@@ -1706,7 +1706,7 @@
   },
   {
     "category": "Svenska",
-    "question": "Vilken är en vokal?",
+    "question": "Vilken ï¿½r en vokal?",
     "alternativ": [
       "B",
       "C",
@@ -1717,7 +1717,7 @@
   },
   {
     "category": "Historia",
-    "question": "Vem var Sveriges kung år 1700?",
+    "question": "Vem var Sveriges kung ï¿½r 1700?",
     "alternativ": [
       "Gustav Vasa",
       "Karl XII",
@@ -1732,14 +1732,14 @@
     "alternativ": [
       "Motsatsord",
       "Liknande ord",
-      "Långt ord",
+      "Lï¿½ngt ord",
       "Kort ord"
     ],
     "ratt_svar": "Motsatsord"
   },
   {
     "category": "Historia",
-    "question": "Vem var Sveriges kung år 1700?",
+    "question": "Vem var Sveriges kung ï¿½r 1700?",
     "alternativ": [
       "Gustav Vasa",
       "Karl XII",
@@ -1750,7 +1750,7 @@
   },
   {
     "category": "Geografi",
-    "question": "Vilket land är störst till ytan?",
+    "question": "Vilket land ï¿½r stï¿½rst till ytan?",
     "alternativ": [
       "Kina",
       "Ryssland",
@@ -1761,18 +1761,18 @@
   },
   {
     "category": "Engelska",
-    "question": "Vad betyder 'apple' på svenska?",
+    "question": "Vad betyder 'apple' pï¿½ svenska?",
     "alternativ": [
       "Apelsin",
-      "Päron",
-      "Äpple",
+      "Pï¿½ron",
+      "ï¿½pple",
       "Banan"
     ],
-    "ratt_svar": "Äpple"
+    "ratt_svar": "ï¿½pple"
   },
   {
     "category": "Svenska",
-    "question": "Vilken är en vokal?",
+    "question": "Vilken ï¿½r en vokal?",
     "alternativ": [
       "B",
       "C",
@@ -1783,7 +1783,7 @@
   },
   {
     "category": "Matematik",
-    "question": "Vilket tal är ett primtal?",
+    "question": "Vilket tal ï¿½r ett primtal?",
     "alternativ": [
       "21",
       "29",
@@ -1794,7 +1794,7 @@
   },
   {
     "category": "Matematik",
-    "question": "Vad är 12 * 8?",
+    "question": "Vad ï¿½r 12 * 8?",
     "alternativ": [
       "96",
       "108",
@@ -1805,29 +1805,29 @@
   },
   {
     "category": "Geografi",
-    "question": "Vilken är Sveriges huvudstad?",
+    "question": "Vilken ï¿½r Sveriges huvudstad?",
     "alternativ": [
       "Oslo",
       "Helsingfors",
-      "Köpenhamn",
+      "Kï¿½penhamn",
       "Stockholm"
     ],
     "ratt_svar": "Stockholm"
   },
   {
     "category": "Naturvetenskap",
-    "question": "Vilket grundämne har kemiska beteckningen O?",
+    "question": "Vilket grundï¿½mne har kemiska beteckningen O?",
     "alternativ": [
       "Syre",
-      "Väte",
-      "Kväve",
+      "Vï¿½te",
+      "Kvï¿½ve",
       "Kol"
     ],
     "ratt_svar": "Syre"
   },
   {
     "category": "Naturvetenskap",
-    "question": "Hur många planeter finns i solsystemet?",
+    "question": "Hur mï¿½nga planeter finns i solsystemet?",
     "alternativ": [
       "7",
       "8",
@@ -1840,7 +1840,7 @@
     "category": "Historia",
     "question": "Vad kallades vikingarnas skepp?",
     "alternativ": [
-      "Båtar",
+      "Bï¿½tar",
       "Drakskepp",
       "Lastfartyg",
       "Galeoner"
@@ -1849,7 +1849,7 @@
   },
   {
     "category": "Geografi",
-    "question": "Vilket land är störst till ytan?",
+    "question": "Vilket land ï¿½r stï¿½rst till ytan?",
     "alternativ": [
       "Kina",
       "Ryssland",
@@ -1864,7 +1864,7 @@
     "alternativ": [
       "Motsatsord",
       "Liknande ord",
-      "Långt ord",
+      "Lï¿½ngt ord",
       "Kort ord"
     ],
     "ratt_svar": "Motsatsord"
@@ -1873,16 +1873,16 @@
     "category": "Engelska",
     "question": "Vad betyder 'quick'?",
     "alternativ": [
-      "Långsam",
+      "Lï¿½ngsam",
       "Snabb",
-      "Trött",
+      "Trï¿½tt",
       "Glad"
     ],
     "ratt_svar": "Snabb"
   },
   {
     "category": "Geografi",
-    "question": "Vilket land är störst till ytan?",
+    "question": "Vilket land ï¿½r stï¿½rst till ytan?",
     "alternativ": [
       "Kina",
       "Ryssland",
@@ -1897,25 +1897,25 @@
     "alternativ": [
       "Motsatsord",
       "Liknande ord",
-      "Långt ord",
+      "Lï¿½ngt ord",
       "Kort ord"
     ],
     "ratt_svar": "Motsatsord"
   },
   {
     "category": "Geografi",
-    "question": "Vilken är Sveriges huvudstad?",
+    "question": "Vilken ï¿½r Sveriges huvudstad?",
     "alternativ": [
       "Oslo",
       "Helsingfors",
-      "Köpenhamn",
+      "Kï¿½penhamn",
       "Stockholm"
     ],
     "ratt_svar": "Stockholm"
   },
   {
     "category": "Engelska",
-    "question": "Vilket är rätt stavning?",
+    "question": "Vilket ï¿½r rï¿½tt stavning?",
     "alternativ": [
       "Hous",
       "House",
@@ -1926,7 +1926,7 @@
   },
   {
     "category": "Historia",
-    "question": "När började andra världskriget?",
+    "question": "Nï¿½r bï¿½rjade andra vï¿½rldskriget?",
     "alternativ": [
       "1914",
       "1939",
@@ -1939,60 +1939,60 @@
     "category": "Naturvetenskap",
     "question": "Vilket organ pumpar blodet i kroppen?",
     "alternativ": [
-      "Hjärnan",
-      "Hjärtat",
+      "Hjï¿½rnan",
+      "Hjï¿½rtat",
       "Magen",
       "Lungan"
     ],
-    "ratt_svar": "Hjärtat"
+    "ratt_svar": "Hjï¿½rtat"
   },
   {
     "category": "Svenska",
-    "question": "Vilket ord är en synonym till 'glad'?",
+    "question": "Vilket ord ï¿½r en synonym till 'glad'?",
     "alternativ": [
       "Arg",
       "Lycklig",
-      "Trött",
+      "Trï¿½tt",
       "Ledsen"
     ],
     "ratt_svar": "Lycklig"
   },
   {
     "category": "Naturvetenskap",
-    "question": "Vilket grundämne har kemiska beteckningen O?",
+    "question": "Vilket grundï¿½mne har kemiska beteckningen O?",
     "alternativ": [
       "Syre",
-      "Väte",
-      "Kväve",
+      "Vï¿½te",
+      "Kvï¿½ve",
       "Kol"
     ],
     "ratt_svar": "Syre"
   },
   {
     "category": "Geografi",
-    "question": "Vilken är Sveriges huvudstad?",
+    "question": "Vilken ï¿½r Sveriges huvudstad?",
     "alternativ": [
       "Oslo",
       "Helsingfors",
-      "Köpenhamn",
+      "Kï¿½penhamn",
       "Stockholm"
     ],
     "ratt_svar": "Stockholm"
   },
   {
     "category": "Geografi",
-    "question": "Vilket hav ligger öster om Sverige?",
+    "question": "Vilket hav ligger ï¿½ster om Sverige?",
     "alternativ": [
       "Atlanten",
-      "Östersjön",
+      "ï¿½stersjï¿½n",
       "Medelhavet",
       "Stilla havet"
     ],
-    "ratt_svar": "Östersjön"
+    "ratt_svar": "ï¿½stersjï¿½n"
   },
   {
     "category": "Matematik",
-    "question": "Vad är 12 * 8?",
+    "question": "Vad ï¿½r 12 * 8?",
     "alternativ": [
       "96",
       "108",
@@ -2003,7 +2003,7 @@
   },
   {
     "category": "Naturvetenskap",
-    "question": "Hur många planeter finns i solsystemet?",
+    "question": "Hur mï¿½nga planeter finns i solsystemet?",
     "alternativ": [
       "7",
       "8",
@@ -2014,7 +2014,7 @@
   },
   {
     "category": "Svenska",
-    "question": "Vilken är en vokal?",
+    "question": "Vilken ï¿½r en vokal?",
     "alternativ": [
       "B",
       "C",
@@ -2029,7 +2029,7 @@
     "alternativ": [
       "Motsatsord",
       "Liknande ord",
-      "Långt ord",
+      "Lï¿½ngt ord",
       "Kort ord"
     ],
     "ratt_svar": "Motsatsord"
@@ -2038,38 +2038,38 @@
     "category": "Engelska",
     "question": "Vad betyder 'quick'?",
     "alternativ": [
-      "Långsam",
+      "Lï¿½ngsam",
       "Snabb",
-      "Trött",
+      "Trï¿½tt",
       "Glad"
     ],
     "ratt_svar": "Snabb"
   },
   {
     "category": "Geografi",
-    "question": "Vilket hav ligger öster om Sverige?",
+    "question": "Vilket hav ligger ï¿½ster om Sverige?",
     "alternativ": [
       "Atlanten",
-      "Östersjön",
+      "ï¿½stersjï¿½n",
       "Medelhavet",
       "Stilla havet"
     ],
-    "ratt_svar": "Östersjön"
+    "ratt_svar": "ï¿½stersjï¿½n"
   },
   {
     "category": "Geografi",
-    "question": "Vilken är Sveriges huvudstad?",
+    "question": "Vilken ï¿½r Sveriges huvudstad?",
     "alternativ": [
       "Oslo",
       "Helsingfors",
-      "Köpenhamn",
+      "Kï¿½penhamn",
       "Stockholm"
     ],
     "ratt_svar": "Stockholm"
   },
   {
     "category": "Engelska",
-    "question": "Vilket är rätt stavning?",
+    "question": "Vilket ï¿½r rï¿½tt stavning?",
     "alternativ": [
       "Hous",
       "House",
@@ -2080,7 +2080,7 @@
   },
   {
     "category": "Matematik",
-    "question": "Vilket tal är ett primtal?",
+    "question": "Vilket tal ï¿½r ett primtal?",
     "alternativ": [
       "21",
       "29",
@@ -2091,7 +2091,7 @@
   },
   {
     "category": "Matematik",
-    "question": "Vad är kvadratroten av 81?",
+    "question": "Vad ï¿½r kvadratroten av 81?",
     "alternativ": [
       "7",
       "8",
@@ -2102,18 +2102,18 @@
   },
   {
     "category": "Svenska",
-    "question": "Vilket ord är en synonym till 'glad'?",
+    "question": "Vilket ord ï¿½r en synonym till 'glad'?",
     "alternativ": [
       "Arg",
       "Lycklig",
-      "Trött",
+      "Trï¿½tt",
       "Ledsen"
     ],
     "ratt_svar": "Lycklig"
   },
   {
     "category": "Matematik",
-    "question": "Vad är kvadratroten av 81?",
+    "question": "Vad ï¿½r kvadratroten av 81?",
     "alternativ": [
       "7",
       "8",
@@ -2124,11 +2124,11 @@
   },
   {
     "category": "Geografi",
-    "question": "Vilken är Sveriges huvudstad?",
+    "question": "Vilken ï¿½r Sveriges huvudstad?",
     "alternativ": [
       "Oslo",
       "Helsingfors",
-      "Köpenhamn",
+      "Kï¿½penhamn",
       "Stockholm"
     ],
     "ratt_svar": "Stockholm"
@@ -2137,9 +2137,9 @@
     "category": "Engelska",
     "question": "Vad betyder 'quick'?",
     "alternativ": [
-      "Långsam",
+      "Lï¿½ngsam",
       "Snabb",
-      "Trött",
+      "Trï¿½tt",
       "Glad"
     ],
     "ratt_svar": "Snabb"
@@ -2150,14 +2150,14 @@
     "alternativ": [
       "Motsatsord",
       "Liknande ord",
-      "Långt ord",
+      "Lï¿½ngt ord",
       "Kort ord"
     ],
     "ratt_svar": "Motsatsord"
   },
   {
     "category": "Svenska",
-    "question": "Vilken är en vokal?",
+    "question": "Vilken ï¿½r en vokal?",
     "alternativ": [
       "B",
       "C",
@@ -2168,7 +2168,7 @@
   },
   {
     "category": "Engelska",
-    "question": "Vilket är rätt stavning?",
+    "question": "Vilket ï¿½r rï¿½tt stavning?",
     "alternativ": [
       "Hous",
       "House",
@@ -2179,7 +2179,7 @@
   },
   {
     "category": "Matematik",
-    "question": "Vilket tal är ett primtal?",
+    "question": "Vilket tal ï¿½r ett primtal?",
     "alternativ": [
       "21",
       "29",
@@ -2190,13 +2190,13 @@
   },
   {
     "category": "Engelska",
-    "question": "Vad betyder 'apple' på svenska?",
+    "question": "Vad betyder 'apple' pï¿½ svenska?",
     "alternativ": [
       "Apelsin",
-      "Päron",
-      "Äpple",
+      "Pï¿½ron",
+      "ï¿½pple",
       "Banan"
     ],
-    "ratt_svar": "Äpple"
+    "ratt_svar": "ï¿½pple"
   }
 ]

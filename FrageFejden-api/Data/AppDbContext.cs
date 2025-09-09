@@ -15,7 +15,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
     
     public DbSet<Class> Classes { get; set; }
     public DbSet<ClassMembership> ClassMemberships { get; set; }
-    public DbSet<Subject> Subjects { get; set; }
+    //public DbSet<Subject> Subjects { get; set; }
     public DbSet<Topic> Topics { get; set; }
     public DbSet<Level> Levels { get; set; }
     public DbSet<Quiz> Quizzes { get; set; }

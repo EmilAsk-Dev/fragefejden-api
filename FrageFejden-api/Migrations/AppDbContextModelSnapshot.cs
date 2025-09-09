@@ -577,6 +577,9 @@ namespace FrageFejden_api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("ClassId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -592,9 +595,11 @@ namespace FrageFejden_api.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ClassId");
+
                     b.HasIndex("CreatedById");
 
-                    b.ToTable("Subjects");
+                    b.ToTable("Subject");
                 });
 
             modelBuilder.Entity("FrageFejden.Entities.Topic", b =>
@@ -1147,6 +1152,10 @@ namespace FrageFejden_api.Migrations
 
             modelBuilder.Entity("FrageFejden.Entities.Subject", b =>
                 {
+                    b.HasOne("FrageFejden.Entities.Class", null)
+                        .WithMany("Subjects")
+                        .HasForeignKey("ClassId");
+
                     b.HasOne("FrageFejden.Entities.AppUser", "CreatedBy")
                         .WithMany("SubjectsCreated")
                         .HasForeignKey("CreatedById")
@@ -1294,6 +1303,8 @@ namespace FrageFejden_api.Migrations
                     b.Navigation("Memberships");
 
                     b.Navigation("Quizzes");
+
+                    b.Navigation("Subjects");
                 });
 
             modelBuilder.Entity("FrageFejden.Entities.Duel", b =>

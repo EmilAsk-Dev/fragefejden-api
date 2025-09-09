@@ -138,7 +138,7 @@ namespace FrageFejden.Api.Auth
 
             var user = await _userManager.FindByIdAsync(userId);
             var roles = user is null ? Array.Empty<string>() : await _userManager.GetRolesAsync(user);
-            return Ok(new { user?.Id, user?.UserName, user?.Email, Roles = roles, exp = user?.experiencePoints, AvatarUrl = user?.AvatarUrl });
+            return Ok(new { user?.Id, user?.UserName, user?.Email, Roles = roles, exp = user?.experiencePoints, AvatarUrl = user?.AvatarUrl, FullName = user?.FullName });
         }
     }
 }
