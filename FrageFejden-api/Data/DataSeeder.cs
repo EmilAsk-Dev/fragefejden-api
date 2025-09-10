@@ -16,9 +16,10 @@ namespace FrageFejden.Data
     {
         private readonly AppDbContext _context;
         private readonly UserManager<AppUser> _userManager;
+        private readonly RoleManager<IdentityRole<Guid>> _roleManager;
         private readonly Random _random = new Random();
 
-        
+
         private static readonly Guid QuizMathId = Guid.Parse("aaaa1111-aaaa-1111-aaaa-111111111111");
         private static readonly Guid QuizScienceId = Guid.Parse("aaaa2222-aaaa-2222-aaaa-222222222222");
 
@@ -28,10 +29,11 @@ namespace FrageFejden.Data
         
         private static readonly Guid Duel1Id = Guid.Parse("20000000-0000-0000-0000-000000000001");
 
-        public DatabaseSeeder(AppDbContext context, UserManager<AppUser> userManager)
+        public DatabaseSeeder(AppDbContext context, UserManager<AppUser> userManager, RoleManager<IdentityRole<Guid>> roleManager)
         {
             _context = context;
             _userManager = userManager;
+            _roleManager = roleManager;
         }
 
 
@@ -124,59 +126,93 @@ namespace FrageFejden.Data
 
         private async Task SeedUsersAsync()
         {
+            // Make sure Identity roles exist (names must match what you use in [Authorize(Roles=...)] )
+            // Here we use: "Admin", "Lärare", "Student"
+            foreach (var rn in new[] { "Admin", "Lärare", "Student" })
+            {
+                if (!await _roleManager.RoleExistsAsync(rn))
+                    await _roleManager.CreateAsync(new IdentityRole<Guid>(rn));
+            }
+
             var users = new[]
             {
-                new AppUser
-                {
-                    Id = Guid.Parse("11111111-1111-1111-1111-111111111111"),
-                    UserName = "john.teacher@school.edu",
-                    Email = "john.teacher@school.edu",
-                    EmailConfirmed = true,
-                    FullName = "John Smith",
-                    Role = Role.teacher,
-                    CreatedAt = DateTime.UtcNow.AddMonths(-6),
-                    experiencePoints = 2500
-                },
-                new AppUser
-                {
-                    Id = Guid.Parse("22222222-2222-2222-2222-222222222222"),
-                    UserName = "mary.student@school.edu",
-                    Email = "mary.student@school.edu",
-                    EmailConfirmed = true,
-                    FullName = "Mary Johnson",
-                    Role = Role.student,
-                    CreatedAt = DateTime.UtcNow.AddMonths(-3),
-                    experiencePoints = 1200
-                },
-                new AppUser
-                {
-                    Id = Guid.Parse("33333333-3333-3333-3333-333333333333"),
-                    UserName = "bob.student@school.edu",
-                    Email = "bob.student@school.edu",
-                    EmailConfirmed = true,
-                    FullName = "Bob Wilson",
-                    Role = Role.student,
-                    CreatedAt = DateTime.UtcNow.AddMonths(-2),
-                    experiencePoints = 800
-                },
-                new AppUser
-                {
-                    Id = Guid.Parse("44444444-4444-4444-4444-444444444444"),
-                    UserName = "admin@school.edu",
-                    Email = "admin@school.edu",
-                    EmailConfirmed = true,
-                    FullName = "Admin User",
-                    Role = Role.admin,
-                    CreatedAt = DateTime.UtcNow.AddYears(-1),
-                    experiencePoints = 5000
-                }
-            };
+        new AppUser
+        {
+            Id = Guid.Parse("11111111-1111-1111-1111-111111111111"),
+            UserName = "john.teacher@school.edu",
+            Email = "john.teacher@school.edu",
+            EmailConfirmed = true,
+            FullName = "John Smith",
+            Role = Role.teacher,
+            CreatedAt = DateTime.UtcNow.AddMonths(-6),
+            experiencePoints = 2500
+        },
+        new AppUser
+        {
+            Id = Guid.Parse("22222222-2222-2222-2222-222222222222"),
+            UserName = "mary.student@school.edu",
+            Email = "mary.student@school.edu",
+            EmailConfirmed = true,
+            FullName = "Mary Johnson",
+            Role = Role.student,
+            CreatedAt = DateTime.UtcNow.AddMonths(-3),
+            experiencePoints = 1200
+        },
+        new AppUser
+        {
+            Id = Guid.Parse("33333333-3333-3333-3333-333333333333"),
+            UserName = "bob.student@school.edu",
+            Email = "bob.student@school.edu",
+            EmailConfirmed = true,
+            FullName = "Bob Wilson",
+            Role = Role.student,
+            CreatedAt = DateTime.UtcNow.AddMonths(-2),
+            experiencePoints = 800
+        },
+        new AppUser
+        {
+            Id = Guid.Parse("44444444-4444-4444-4444-444444444444"),
+            UserName = "admin@school.edu",
+            Email = "admin@school.edu",
+            EmailConfirmed = true,
+            FullName = "Admin User",
+            Role = Role.admin,
+            CreatedAt = DateTime.UtcNow.AddYears(-1),
+            experiencePoints = 5000
+        }
+    };
 
             foreach (var user in users)
             {
-                await _userManager.CreateAsync(user, "Password123!");
+                // If user already exists, ensure role membership and continue
+                var existing = await _userManager.FindByIdAsync(user.Id.ToString());
+                if (existing is null)
+                {
+                    var createRes = await _userManager.CreateAsync(user, "Password123!");
+                    if (!createRes.Succeeded)
+                        throw new InvalidOperationException($"Failed to create user {user.Email}: " +
+                            string.Join(", ", createRes.Errors.Select(e => e.Description)));
+                    existing = user;
+                }
+
+                var identityRoleName = MapEnumToIdentityRoleName(existing.Role); // "Admin"|"Lärare"|"Student"
+                if (!await _userManager.IsInRoleAsync(existing, identityRoleName))
+                {
+                    var addRoleRes = await _userManager.AddToRoleAsync(existing, identityRoleName);
+                    if (!addRoleRes.Succeeded)
+                        throw new InvalidOperationException($"Failed to add role {identityRoleName} to {existing.Email}: " +
+                            string.Join(", ", addRoleRes.Errors.Select(e => e.Description)));
+                }
             }
         }
+
+        private static string MapEnumToIdentityRoleName(Role r) => r switch
+        {
+            Role.admin => "Admin",
+            Role.teacher => "Lärare",
+            Role.student => "Student",
+            _ => "Student"
+        };
 
         private async Task SeedSubjectsAsync()
         {
@@ -723,7 +759,7 @@ namespace FrageFejden.Data
         }
     }
 
-    
+
     public static class DatabaseSeederExtensions
     {
         public static async Task SeedDatabaseAsync(this IServiceProvider serviceProvider)
@@ -731,9 +767,11 @@ namespace FrageFejden.Data
             using var scope = serviceProvider.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
 
-            var seeder = new DatabaseSeeder(context, userManager);
+            var seeder = new DatabaseSeeder(context, userManager, roleManager); 
             await seeder.SeedAsync();
         }
     }
+
 }
