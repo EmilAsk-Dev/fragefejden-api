@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using FrageFejden.Data;
+//using FrageFejden.Data;
 namespace FrageFejden_api.Services;
 
 public sealed class ClassService : IClassService

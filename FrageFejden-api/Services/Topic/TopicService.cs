@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -8,125 +8,58 @@ using FrageFejden_api.Api;
 
 namespace FrageFejden.Services
 {
+    // ===== DTOs =====
+   
 
+    public class LevelDto
+    {
+        public Guid LevelId { get; set; }
+        public Guid TopicId { get; set; }
+        public int LevelNumber { get; set; }
+        public string? Title { get; set; }
+        public int MinXpUnlock { get; set; }
+    }
+
+    
 
     // ===== Contract =====
-    public interface ISubjectService
+    public interface ITopicService
     {
-        // Class -> Subjects
-        Task<IReadOnlyList<Subject>> GetSubjectsForClassAsync(Guid classId);
-        Task<Subject?> GetSubjectInClassAsync(Guid classId, Guid subjectId);
-        Task<Subject> AddSubjectToClassAsync(Guid classId, string name, string? description, Guid createdById);
-        Task<bool> UpdateSubjectInClassAsync(Guid classId, Guid subjectId, string? name, string? description);
-        Task<bool> RemoveSubjectFromClassAsync(Guid classId, Guid subjectId);
-        Task<bool> ExistsByNameInClassAsync(Guid classId, string subjectName);
-        Task<int> CountSubjectsInClassAsync(Guid classId);
-
-        // Subject -> Topics
-        Task<IReadOnlyList<TopicSummaryDto>> GetTopicsForSubjectAsync(Guid subjectId);
+        // Topics
         Task<Topic?> GetTopicAsync(Guid topicId);
+        Task<IReadOnlyList<TopicSummaryDto>> GetTopicsForSubjectAsync(Guid subjectId);
         Task<Topic> CreateTopicAsync(Guid subjectId, string name, string? description, int? sortOrder = null);
         Task<bool> UpdateTopicAsync(Guid topicId, string? name, string? description, int? sortOrder = null);
         Task<bool> DeleteTopicAsync(Guid topicId);
 
-        // Progress (levels under topic)
+        // Levels under a Topic
+        Task<IReadOnlyList<LevelDto>> GetLevelsForTopicAsync(Guid topicId);
+        Task<Level> CreateLevelAsync(Guid topicId, int levelNumber, string? title, int minXpUnlock);
+        Task<bool> UpdateLevelAsync(Guid levelId, int? levelNumber = null, string? title = null, int? minXpUnlock = null);
+        Task<bool> DeleteLevelAsync(Guid levelId);
+
+        // Progress
         Task<TopicProgressDto?> GetTopicProgressAsync(Guid topicId, Guid userId);
 
-        // Subject-general quizzes (TopicId == null && LevelId == null)
-        Task<IReadOnlyList<Quiz>> GetGeneralQuizzesForSubjectAsync(Guid subjectId, bool onlyPublished = true);
+        // Quizzes scoped to Topic
+        Task<IReadOnlyList<Quiz>> GetTopicQuizzesAsync(Guid topicId, bool onlyPublished = true);
     }
 
     // ===== Implementation =====
-    public class SubjectService : ISubjectService
+    public class TopicService : ITopicService
     {
         private readonly AppDbContext _context;
-        public SubjectService(AppDbContext context) => _context = context;
+        public TopicService(AppDbContext context) => _context = context;
 
-        // ---- Class -> Subjects ----
-        public async Task<IReadOnlyList<Subject>> GetSubjectsForClassAsync(Guid classId)
+        // ---- Topics ----
+        public Task<Topic?> GetTopicAsync(Guid topicId)
         {
-            return await _context.Subjects
+            return _context.Topics
                 .AsNoTracking()
-                .Where(s => s.ClassId == classId)
-                .OrderBy(s => s.Name)
-                .ToListAsync();
+                .Include(t => t.Subject)
+                .FirstOrDefaultAsync(t => t.Id == topicId);
         }
 
-        public async Task<Subject?> GetSubjectInClassAsync(Guid classId, Guid subjectId)
-        {
-            return await _context.Subjects
-                .AsNoTracking()
-                .FirstOrDefaultAsync(s => s.Id == subjectId && s.ClassId == classId);
-        }
-
-        public async Task<Subject> AddSubjectToClassAsync(Guid classId, string name, string? description, Guid createdById)
-        {
-            if (string.IsNullOrWhiteSpace(name))
-                throw new ArgumentException("Name is required.", nameof(name));
-
-            var clsExists = await _context.Classes.AnyAsync(c => c.Id == classId);
-            if (!clsExists) throw new ArgumentException("Class not found.", nameof(classId));
-
-            var trimmed = name.Trim();
-            var dupe = await _context.Subjects.AnyAsync(s => s.ClassId == classId && s.Name.ToLower() == trimmed.ToLower());
-            if (dupe) throw new InvalidOperationException($"Subject '{trimmed}' already exists in this class.");
-
-            var subject = new Subject
-            {
-                Id = Guid.NewGuid(),
-                Name = trimmed,
-                Description = string.IsNullOrWhiteSpace(description) ? null : description!.Trim(),
-                CreatedById = createdById,
-                CreatedAt = DateTime.UtcNow,
-                ClassId = classId
-            };
-
-            _context.Subjects.Add(subject);
-            await _context.SaveChangesAsync();
-            return subject;
-        }
-
-        public async Task<bool> UpdateSubjectInClassAsync(Guid classId, Guid subjectId, string? name, string? description)
-        {
-            var subj = await _context.Subjects.FirstOrDefaultAsync(s => s.Id == subjectId && s.ClassId == classId);
-            if (subj is null) return false;
-
-            if (!string.IsNullOrWhiteSpace(name))
-            {
-                var newName = name.Trim();
-                var nameTaken = await _context.Subjects
-                    .AnyAsync(s => s.ClassId == classId && s.Id != subjectId && s.Name.ToLower() == newName.ToLower());
-                if (nameTaken) throw new InvalidOperationException($"Subject '{newName}' already exists in this class.");
-                subj.Name = newName;
-            }
-
-            if (description != null)
-                subj.Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim();
-
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
-        public async Task<bool> RemoveSubjectFromClassAsync(Guid classId, Guid subjectId)
-        {
-            var subj = await _context.Subjects.FirstOrDefaultAsync(s => s.Id == subjectId && s.ClassId == classId);
-            if (subj is null) return false;
-
-            _context.Subjects.Remove(subj);
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
-        public Task<bool> ExistsByNameInClassAsync(Guid classId, string subjectName)
-        {
-            var lowered = subjectName.Trim().ToLower();
-            return _context.Subjects.AnyAsync(s => s.ClassId == classId && s.Name.ToLower() == lowered);
-        }
-
-        public Task<int> CountSubjectsInClassAsync(Guid classId)
-            => _context.Subjects.CountAsync(s => s.ClassId == classId);
-
-        // ---- Subject -> Topics ----
         public async Task<IReadOnlyList<TopicSummaryDto>> GetTopicsForSubjectAsync(Guid subjectId)
         {
             return await _context.Topics
@@ -136,6 +69,7 @@ namespace FrageFejden.Services
                 .Select(t => new TopicSummaryDto
                 {
                     TopicId = t.Id,
+                    SubjectId = t.SubjectId,
                     Name = t.Name,
                     Description = t.Description,
                     SortOrder = t.SortOrder,
@@ -144,21 +78,13 @@ namespace FrageFejden.Services
                 .ToListAsync();
         }
 
-        public Task<Topic?> GetTopicAsync(Guid topicId)
-        {
-            return _context.Topics
-                .AsNoTracking()
-                .Include(t => t.Subject)
-                .FirstOrDefaultAsync(t => t.Id == topicId);
-        }
-
         public async Task<Topic> CreateTopicAsync(Guid subjectId, string name, string? description, int? sortOrder = null)
         {
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentException("Name is required.", nameof(name));
 
-            var subjExists = await _context.Subjects.AnyAsync(s => s.Id == subjectId);
-            if (!subjExists) throw new ArgumentException("Subject not found.", nameof(subjectId));
+            var subjectExists = await _context.Subjects.AnyAsync(s => s.Id == subjectId);
+            if (!subjectExists) throw new ArgumentException("Subject not found.", nameof(subjectId));
 
             var trimmed = name.Trim();
             var dup = await _context.Topics.AnyAsync(t => t.SubjectId == subjectId && t.Name.ToLower() == trimmed.ToLower());
@@ -174,7 +100,7 @@ namespace FrageFejden.Services
                 Id = Guid.NewGuid(),
                 SubjectId = subjectId,
                 Name = trimmed,
-                Description = string.IsNullOrWhiteSpace(description) ? null : description!.Trim(),
+                Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim(),
                 SortOrder = nextOrder
             };
 
@@ -212,12 +138,88 @@ namespace FrageFejden.Services
             var topic = await _context.Topics.FirstOrDefaultAsync(t => t.Id == topicId);
             if (topic is null) return false;
 
-            _context.Topics.Remove(topic);
+            _context.Topics.Remove(topic); // Levels cascade
             await _context.SaveChangesAsync();
             return true;
         }
 
-        // ---- Progress (topic-based) ----
+        // ---- Levels ----
+        public async Task<IReadOnlyList<LevelDto>> GetLevelsForTopicAsync(Guid topicId)
+        {
+            var topicExists = await _context.Topics.AnyAsync(t => t.Id == topicId);
+            if (!topicExists) return Array.Empty<LevelDto>();
+
+            return await _context.Levels
+                .AsNoTracking()
+                .Where(l => l.TopicId == topicId)
+                .OrderBy(l => l.LevelNumber)
+                .Select(l => new LevelDto
+                {
+                    LevelId = l.Id,
+                    TopicId = l.TopicId,
+                    LevelNumber = l.LevelNumber,
+                    Title = l.Title,
+                    MinXpUnlock = l.MinXpUnlock
+                })
+                .ToListAsync();
+        }
+
+        public async Task<Level> CreateLevelAsync(Guid topicId, int levelNumber, string? title, int minXpUnlock)
+        {
+            var topic = await _context.Topics.FirstOrDefaultAsync(t => t.Id == topicId);
+            if (topic is null) throw new ArgumentException("Topic not found.", nameof(topicId));
+
+            // Enforce unique LevelNumber per Topic
+            var exists = await _context.Levels.AnyAsync(l => l.TopicId == topicId && l.LevelNumber == levelNumber);
+            if (exists) throw new InvalidOperationException($"Level {levelNumber} already exists in this topic.");
+
+            var level = new Level
+            {
+                Id = Guid.NewGuid(),
+                TopicId = topicId,
+                LevelNumber = levelNumber,
+                Title = string.IsNullOrWhiteSpace(title) ? null : title!.Trim(),
+                MinXpUnlock = minXpUnlock
+            };
+
+            _context.Levels.Add(level);
+            await _context.SaveChangesAsync();
+            return level;
+        }
+
+        public async Task<bool> UpdateLevelAsync(Guid levelId, int? levelNumber = null, string? title = null, int? minXpUnlock = null)
+        {
+            var level = await _context.Levels.FirstOrDefaultAsync(l => l.Id == levelId);
+            if (level is null) return false;
+
+            if (levelNumber.HasValue && levelNumber.Value != level.LevelNumber)
+            {
+                var dup = await _context.Levels.AnyAsync(l => l.TopicId == level.TopicId && l.LevelNumber == levelNumber.Value && l.Id != levelId);
+                if (dup) throw new InvalidOperationException($"Level {levelNumber.Value} already exists in this topic.");
+                level.LevelNumber = levelNumber.Value;
+            }
+
+            if (title != null)
+                level.Title = string.IsNullOrWhiteSpace(title) ? null : title.Trim();
+
+            if (minXpUnlock.HasValue)
+                level.MinXpUnlock = minXpUnlock.Value;
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> DeleteLevelAsync(Guid levelId)
+        {
+            var level = await _context.Levels.FirstOrDefaultAsync(l => l.Id == levelId);
+            if (level is null) return false;
+
+            _context.Levels.Remove(level);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        // ---- Progress ----
         public async Task<TopicProgressDto?> GetTopicProgressAsync(Guid topicId, Guid userId)
         {
             var topic = await _context.Topics
@@ -228,7 +230,7 @@ namespace FrageFejden.Services
 
             if (topic is null) return null;
 
-            // XP is per Subject
+            // XP is tracked at Subject
             var xp = await _context.UserProgresses
                 .Where(up => up.UserId == userId && up.SubjectId == topic.SubjectId)
                 .Select(up => (int?)up.Xp)
@@ -269,12 +271,12 @@ namespace FrageFejden.Services
             return dto;
         }
 
-        // ---- Subject-general quizzes (no topic/level) ----
-        public async Task<IReadOnlyList<Quiz>> GetGeneralQuizzesForSubjectAsync(Guid subjectId, bool onlyPublished = true)
+        // ---- Quizzes for Topic ----
+        public async Task<IReadOnlyList<Quiz>> GetTopicQuizzesAsync(Guid topicId, bool onlyPublished = true)
         {
             var q = _context.Quizzes
                 .AsNoTracking()
-                .Where(z => z.SubjectId == subjectId && z.TopicId == null && z.LevelId == null);
+                .Where(z => z.TopicId == topicId); // topic-scoped (not general)
 
             if (onlyPublished) q = q.Where(z => z.IsPublished);
 

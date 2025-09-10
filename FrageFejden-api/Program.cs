@@ -1,6 +1,8 @@
 ﻿using FrageFejden;
 using FrageFejden.Api.Auth;
 using FrageFejden.Data;
+
+//using FrageFejden.Data;
 using FrageFejden.Entities;
 using FrageFejden.Services;
 using FrageFejden.Services.Interfaces;
@@ -115,6 +117,7 @@ builder.Services.AddSwaggerGen(c =>
 // Jwt token factory
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<ISubjectService, SubjectService>();
+builder.Services.AddScoped<ITopicService, TopicService>();
 builder.Services.AddScoped<IClassService, ClassService>();
 builder.Services.AddScoped<IDuelService, DuelService>();
 builder.Services.AddScoped<DailyQuestionService>();

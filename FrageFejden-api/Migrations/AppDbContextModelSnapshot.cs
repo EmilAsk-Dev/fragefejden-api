@@ -379,15 +379,15 @@ namespace FrageFejden_api.Migrations
                     b.Property<int>("MinXpUnlock")
                         .HasColumnType("int");
 
-                    b.Property<Guid>("SubjectId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<string>("Title")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid>("TopicId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("SubjectId");
+                    b.HasIndex("TopicId", "LevelNumber");
 
                     b.ToTable("Levels");
                 });
@@ -435,9 +435,9 @@ namespace FrageFejden_api.Migrations
 
                     b.HasIndex("CreatedById");
 
-                    b.HasIndex("SubjectId");
-
                     b.HasIndex("TopicId");
+
+                    b.HasIndex("SubjectId", "TopicId", "Difficulty");
 
                     b.ToTable("Questions");
                 });
@@ -499,6 +499,9 @@ namespace FrageFejden_api.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("TopicId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ClassId");
@@ -507,7 +510,9 @@ namespace FrageFejden_api.Migrations
 
                     b.HasIndex("LevelId");
 
-                    b.HasIndex("SubjectId");
+                    b.HasIndex("TopicId");
+
+                    b.HasIndex("SubjectId", "TopicId", "LevelId", "IsPublished");
 
                     b.ToTable("Quizzes");
                 });
@@ -531,7 +536,7 @@ namespace FrageFejden_api.Migrations
 
                     b.HasIndex("QuestionId");
 
-                    b.HasIndex("QuizId");
+                    b.HasIndex("QuizId", "QuestionId");
 
                     b.ToTable("QuizQuestions");
                 });
@@ -589,9 +594,13 @@ namespace FrageFejden_api.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("IconUrl")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
 
@@ -599,7 +608,9 @@ namespace FrageFejden_api.Migrations
 
                     b.HasIndex("CreatedById");
 
-                    b.ToTable("Subject");
+                    b.HasIndex("Name");
+
+                    b.ToTable("Subjects");
                 });
 
             modelBuilder.Entity("FrageFejden.Entities.Topic", b =>
@@ -613,14 +624,19 @@ namespace FrageFejden_api.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
 
                     b.Property<Guid>("SubjectId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SubjectId");
+                    b.HasIndex("SubjectId", "Name");
+
+                    b.HasIndex("SubjectId", "SortOrder");
 
                     b.ToTable("Topics");
                 });
@@ -672,6 +688,9 @@ namespace FrageFejden_api.Migrations
                     b.Property<Guid>("SubjectId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("TopicId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
 
@@ -684,7 +703,9 @@ namespace FrageFejden_api.Migrations
 
                     b.HasIndex("SubjectId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("TopicId");
+
+                    b.HasIndex("UserId", "SubjectId", "TopicId", "LevelId");
 
                     b.ToTable("UserProgresses");
                 });
@@ -1020,13 +1041,13 @@ namespace FrageFejden_api.Migrations
 
             modelBuilder.Entity("FrageFejden.Entities.Level", b =>
                 {
-                    b.HasOne("FrageFejden.Entities.Subject", "Subject")
+                    b.HasOne("FrageFejden.Entities.Topic", "Topic")
                         .WithMany("Levels")
-                        .HasForeignKey("SubjectId")
+                        .HasForeignKey("TopicId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Subject");
+                    b.Navigation("Topic");
                 });
 
             modelBuilder.Entity("FrageFejden.Entities.Question", b =>
@@ -1096,6 +1117,11 @@ namespace FrageFejden_api.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("FrageFejden.Entities.Topic", "Topic")
+                        .WithMany("Quizzes")
+                        .HasForeignKey("TopicId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.Navigation("Class");
 
                     b.Navigation("CreatedBy");
@@ -1103,6 +1129,8 @@ namespace FrageFejden_api.Migrations
                     b.Navigation("Level");
 
                     b.Navigation("Subject");
+
+                    b.Navigation("Topic");
                 });
 
             modelBuilder.Entity("FrageFejden.Entities.QuizQuestion", b =>
@@ -1152,7 +1180,7 @@ namespace FrageFejden_api.Migrations
 
             modelBuilder.Entity("FrageFejden.Entities.Subject", b =>
                 {
-                    b.HasOne("FrageFejden.Entities.Class", null)
+                    b.HasOne("FrageFejden.Entities.Class", "Class")
                         .WithMany("Subjects")
                         .HasForeignKey("ClassId");
 
@@ -1161,6 +1189,8 @@ namespace FrageFejden_api.Migrations
                         .HasForeignKey("CreatedById")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
+
+                    b.Navigation("Class");
 
                     b.Navigation("CreatedBy");
                 });
@@ -1215,6 +1245,11 @@ namespace FrageFejden_api.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("FrageFejden.Entities.Topic", "Topic")
+                        .WithMany()
+                        .HasForeignKey("TopicId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("FrageFejden.Entities.AppUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -1224,6 +1259,8 @@ namespace FrageFejden_api.Migrations
                     b.Navigation("Level");
 
                     b.Navigation("Subject");
+
+                    b.Navigation("Topic");
 
                     b.Navigation("User");
                 });
@@ -1339,8 +1376,6 @@ namespace FrageFejden_api.Migrations
 
                     b.Navigation("Duels");
 
-                    b.Navigation("Levels");
-
                     b.Navigation("Questions");
 
                     b.Navigation("Quizzes");
@@ -1356,7 +1391,11 @@ namespace FrageFejden_api.Migrations
                 {
                     b.Navigation("AiTemplates");
 
+                    b.Navigation("Levels");
+
                     b.Navigation("Questions");
+
+                    b.Navigation("Quizzes");
                 });
 #pragma warning restore 612, 618
         }
