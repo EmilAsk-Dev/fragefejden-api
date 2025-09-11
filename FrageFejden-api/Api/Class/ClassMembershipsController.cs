@@ -50,4 +50,6 @@ public sealed class ClassMembershipsController : ControllerBase
         try { return await _svc.RemoveMemberAsync(id, UserId(), userId, ct) ? NoContent() : NotFound(); }
         catch (UnauthorizedAccessException) { return Forbid(); }
     }
+
+    
 }

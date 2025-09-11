@@ -24,6 +24,9 @@ public sealed class ScoreDto
 
 public interface IClassService
 {
+    Task<(Guid Id, string Name)?> FindClassByJoinCodeAsync(string joinCode, CancellationToken ct);
+
+
     // Queries
     Task<(IReadOnlyList<Class> Items, int Total)> ListAsync(int page, int pageSize, CancellationToken ct);
     Task<Class?> GetByIdAsync(Guid id, CancellationToken ct);

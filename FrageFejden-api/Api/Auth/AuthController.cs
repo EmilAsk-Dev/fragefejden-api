@@ -58,7 +58,7 @@ namespace FrageFejden.Api.Auth
 
                 if (!create.Succeeded)
                     return BadRequest(new { errors = create.Errors.Select(e => e.Description) });
-
+                    
                 _ = await _userManager.AddToRoleAsync(user, "Student");
 
                 var token = await _jwt.CreateTokenAsync(user);
@@ -138,7 +138,7 @@ namespace FrageFejden.Api.Auth
 
             var user = await _userManager.FindByIdAsync(userId);
             var roles = user is null ? Array.Empty<string>() : await _userManager.GetRolesAsync(user);
-            return Ok(new { user?.Id, user?.UserName, user?.Email, Roles = roles, exp = user?.experiencePoints });
+            return Ok(new { user?.Id, user?.UserName, user?.Email, Roles = roles, exp = user?.experiencePoints, AvatarUrl = user?.AvatarUrl, FullName = user?.FullName });
         }
     }
 }

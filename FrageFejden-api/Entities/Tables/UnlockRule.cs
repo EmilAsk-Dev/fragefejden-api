@@ -1,9 +1,5 @@
-﻿using FrageFejden.Entities.Enums;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System;
+using FrageFejden.Entities.Enums;
 
 namespace FrageFejden.Entities
 {
@@ -11,8 +7,10 @@ namespace FrageFejden.Entities
     {
         public Guid Id { get; set; }
         public Guid SubjectId { get; set; }
+
         public Guid? FromLevelId { get; set; }
         public Guid ToLevelId { get; set; }
+
         public UnlockConditionType Condition { get; set; }
         public int Threshold { get; set; }
 

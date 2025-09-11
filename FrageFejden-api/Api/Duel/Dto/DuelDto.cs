@@ -142,6 +142,5 @@ namespace FrageFejden.DTOs.Duel
         public Guid Id { get; set; }
         public string OptionText { get; set; } = null!;
         public int SortOrder { get; set; }
-        // Note: IsCorrect is intentionally omitted from DTO for security
     }
 }

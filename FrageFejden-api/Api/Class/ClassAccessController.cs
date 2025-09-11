@@ -4,6 +4,7 @@ using FrageFejden_api.Services;
 using System.Security.Claims;
 using Swashbuckle.AspNetCore.Annotations;
 using System.ComponentModel;
+using Microsoft.EntityFrameworkCore;
 
 
 [ApiController]
@@ -13,6 +14,8 @@ public sealed class ClassAccessController : ControllerBase
 {
     private readonly IClassService _svc;
     public ClassAccessController(IClassService svc) => _svc = svc;
+
+    
 
     private Guid UserId() =>
         Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub"), out var g)
@@ -35,10 +38,28 @@ public sealed class ClassAccessController : ControllerBase
     public async Task<IActionResult> Leave(Guid id, CancellationToken ct)
         => (await _svc.LeaveAsync(UserId(), id, ct)) ? NoContent() : NotFound();
 
-    [HttpPost("{id:guid}/regen-joincode"), Authorize]
-    public async Task<IActionResult> RegenerateJoinCode(Guid id, CancellationToken ct)
+    [HttpGet("validate-joincode/{joinCode}"), AllowAnonymous]
+    [SwaggerOperation(
+    Summary = "Kollar om joinkoden är giltig "
+    )]
+    public async Task<ActionResult> ValidateJoinCode(string joinCode, CancellationToken ct)
     {
-        try { var res = await _svc.RegenerateJoinCodeAsync(id, UserId(), ct); return res is null ? NotFound() : Ok(new { res.Value.Id, res.Value.JoinCode }); }
-        catch (UnauthorizedAccessException) { return Forbid(); }
+        if (string.IsNullOrWhiteSpace(joinCode))
+            return BadRequest(new { Message = "JoinCode is required." });
+
+        try
+        {
+            var info = await _svc.FindClassByJoinCodeAsync(joinCode, ct);
+
+            return info is null
+                ? NotFound(new { IsValid = false, Message = "JoinCode not found or invalid." })
+                : Ok(new { IsValid = true, ClassId = info.Value.Id, ClassName = info.Value.Name });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                new { Message = "An error occurred while validating join code.", Exception = ex.Message });
+        }
     }
+
 }

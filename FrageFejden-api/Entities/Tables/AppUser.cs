@@ -14,7 +14,7 @@ public class AppUser : IdentityUser<Guid>
     public string FullName { get; set; } = null!;
 
     public Role Role { get; set; } = Role.student;
-    public string? AvatarUrl { get; set; }
+    public string? AvatarUrl { get; set; } = "src/assets/images/avatar/default-avatar.png";
     public DateTime CreatedAt { get; set; }
 
     public double experiencePoints { get; set; }

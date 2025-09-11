@@ -18,5 +18,6 @@ namespace FrageFejden.Entities
         public AppUser? CreatedBy { get; set; }
         public ICollection<ClassMembership> Memberships { get; set; } = new List<ClassMembership>();
         public ICollection<Quiz> Quizzes { get; set; } = new List<Quiz>();
+        public ICollection<Subject> Subjects { get; set; } = new List<Subject>();
     }
 }
