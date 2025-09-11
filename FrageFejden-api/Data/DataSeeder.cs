@@ -173,7 +173,7 @@ namespace FrageFejden.Data
         // ===== Classes (with Subjects attached to Class) =====
         private async Task SeedClassesAsync()
         {
-            var teacherId = Guid.Parse("11111111-1111-1111-1111-111111111111"); // John
+            var teacherId = Guid.Parse("11111111-1111-1111-1111-111111111111"); 
 
             var class9B = new Class
             {
@@ -342,15 +342,8 @@ namespace FrageFejden.Data
                     RoleInClass = Role.teacher,
                     EnrolledAt = DateTime.UtcNow.AddMonths(-4)
                 },
-                // Mary also enrolled in 9C (optional extra)
-                new ClassMembership
-                {
-                    Id = Guid.NewGuid(),
-                    ClassId = Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"), // 9C
-                    UserId = maryId,
-                    RoleInClass = Role.student,
-                    EnrolledAt = DateTime.UtcNow.AddMonths(-1)
-                }
+                
+                
             };
 
             _context.Set<ClassMembership>().AddRange(m);
