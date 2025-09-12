@@ -241,7 +241,7 @@ public sealed class ClassService : IClassService
                 (m, u) => new ScoreDto
                 {
                     UserId = u.Id,
-                    UserName = u.UserName,
+                    UserName = u.FullName,
                     Score = u.experiencePoints
                 })
             .ToListAsync(ct);

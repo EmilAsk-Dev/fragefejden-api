@@ -19,7 +19,7 @@ namespace FrageFejden.Data
 
         private static readonly Guid QuizMathId = Guid.Parse("aaaa1111-aaaa-1111-aaaa-111111111111");
         private static readonly Guid QuizScienceId = Guid.Parse("aaaa2222-aaaa-2222-aaaa-222222222222");
-        private static readonly Guid QuizAlgebraL1Id = Guid.Parse("aaaa3333-aaaa-3333-aaaa-333333333333"); // new topic-scoped quiz
+        private static readonly Guid QuizAlgebraL1Id = Guid.Parse("aaaa3333-aaaa-3333-aaaa-333333333333"); 
 
         private static readonly Guid OptH2OId = Guid.Parse("10000000-0000-0000-0000-000000000001");
         private static readonly Guid OptTrueId = Guid.Parse("10000000-0000-0000-0000-000000000002");
@@ -39,16 +39,15 @@ namespace FrageFejden.Data
 
             await SeedIfEmpty<AppUser>(SeedUsersAsync, ct);
 
-            // Classes (with Subjects inside) first
             await SeedIfEmpty<Class>(SeedClassesAsync, ct);
 
-            // Topics depend on Subjects
+            
             await SeedIfEmpty<Topic>(SeedTopicsAsync, ct);
 
-            // Levels now depend on Topics (NOT Subjects)
+            
             await SeedIfEmpty<Level>(SeedLevelsAsync, ct);
 
-            // Memberships (make John the teacher for Mary's class)
+            
             await SeedIfEmpty<ClassMembership>(SeedClassMembershipsAsync, ct);
 
             await SeedIfEmpty<Question>(SeedQuestionsAsync, ct);

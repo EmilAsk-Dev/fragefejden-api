@@ -28,7 +28,6 @@ public sealed class ClassMembershipsController : ControllerBase
     }
 
     public sealed record AddMemberRequest(Guid UserId, Role RoleInClass);
-
     [SwaggerOperation(
         Summary = "Lägger till en medlem i en klass",
         Description = "Lägger till en användare som medlem i den angivna klassen med en specifik roll. Endast lärare kan utföra denna åtgärd."
