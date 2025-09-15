@@ -89,10 +89,11 @@ public sealed class ClassesController : ControllerBase
     )]
     [HttpGet("class/{classId:guid}/scores"), Authorize]
     public async Task<ActionResult<List<ScoreDto>>> GetScoresForClass(
-        Guid classId,
-        [FromQuery] Guid userId,
-        CancellationToken ct)
+    Guid classId,
+    CancellationToken ct)
     {
+        var userId = UserId(); // use your helper method
+
         var result = await _svc.GetScoresForClassAsync(userId, classId, ct);
         return Ok(result);
     }
