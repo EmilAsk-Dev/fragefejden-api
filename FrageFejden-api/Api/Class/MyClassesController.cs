@@ -1,10 +1,10 @@
+using FrageFejden_api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using FrageFejden_api.Services;
 using System.Security.Claims;
 
 [ApiController]
-[Route("api/Class/me")]
+[Route("api/class/me")] // (optional) normalize casing
 [Produces("application/json")]
 public sealed class MyClassesController : ControllerBase
 {
@@ -13,9 +13,13 @@ public sealed class MyClassesController : ControllerBase
 
     private Guid UserId() =>
         Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub"), out var g)
-            ? g : throw new UnauthorizedAccessException();
+            ? g
+            : throw new UnauthorizedAccessException();
 
     [HttpGet, Authorize]
-    public async Task<IActionResult> GetMine(CancellationToken ct)
-        => Ok(await _svc.GetMyClassesAsync(UserId(), ct));
+    public async Task<IActionResult> GetMine(CancellationToken ct = default)
+    {
+        var data = await _svc.GetMyClassesAsync(UserId(), ct);
+        return Ok(data);
+    }
 }

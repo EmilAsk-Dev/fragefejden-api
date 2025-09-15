@@ -19,7 +19,7 @@ namespace FrageFejden.Data
 
         private static readonly Guid QuizMathId = Guid.Parse("aaaa1111-aaaa-1111-aaaa-111111111111");
         private static readonly Guid QuizScienceId = Guid.Parse("aaaa2222-aaaa-2222-aaaa-222222222222");
-        private static readonly Guid QuizAlgebraL1Id = Guid.Parse("aaaa3333-aaaa-3333-aaaa-333333333333"); // new topic-scoped quiz
+        private static readonly Guid QuizAlgebraL1Id = Guid.Parse("aaaa3333-aaaa-3333-aaaa-333333333333"); 
 
         private static readonly Guid OptH2OId = Guid.Parse("10000000-0000-0000-0000-000000000001");
         private static readonly Guid OptTrueId = Guid.Parse("10000000-0000-0000-0000-000000000002");
@@ -39,16 +39,15 @@ namespace FrageFejden.Data
 
             await SeedIfEmpty<AppUser>(SeedUsersAsync, ct);
 
-            // Classes (with Subjects inside) first
             await SeedIfEmpty<Class>(SeedClassesAsync, ct);
 
-            // Topics depend on Subjects
+            
             await SeedIfEmpty<Topic>(SeedTopicsAsync, ct);
 
-            // Levels now depend on Topics (NOT Subjects)
+            
             await SeedIfEmpty<Level>(SeedLevelsAsync, ct);
 
-            // Memberships (make John the teacher for Mary's class)
+            
             await SeedIfEmpty<ClassMembership>(SeedClassMembershipsAsync, ct);
 
             await SeedIfEmpty<Question>(SeedQuestionsAsync, ct);
@@ -173,7 +172,7 @@ namespace FrageFejden.Data
         // ===== Classes (with Subjects attached to Class) =====
         private async Task SeedClassesAsync()
         {
-            var teacherId = Guid.Parse("11111111-1111-1111-1111-111111111111"); // John
+            var teacherId = Guid.Parse("11111111-1111-1111-1111-111111111111"); 
 
             var class9B = new Class
             {
@@ -342,15 +341,8 @@ namespace FrageFejden.Data
                     RoleInClass = Role.teacher,
                     EnrolledAt = DateTime.UtcNow.AddMonths(-4)
                 },
-                // Mary also enrolled in 9C (optional extra)
-                new ClassMembership
-                {
-                    Id = Guid.NewGuid(),
-                    ClassId = Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"), // 9C
-                    UserId = maryId,
-                    RoleInClass = Role.student,
-                    EnrolledAt = DateTime.UtcNow.AddMonths(-1)
-                }
+                
+                
             };
 
             _context.Set<ClassMembership>().AddRange(m);
