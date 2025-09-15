@@ -90,11 +90,14 @@ public sealed class ClassesController : ControllerBase
     [HttpGet("class/{classId:guid}/scores"), Authorize]
     public async Task<ActionResult<List<ScoreDto>>> GetScoresForClass(
         Guid classId,
-        [FromQuery] Guid userId,
+        //[FromQuery] Guid userId,
         CancellationToken ct)
     {
-        var result = await _svc.GetScoresForClassAsync(userId, classId, ct);
-        return Ok(result);
+         var userId = UserId(); // ← hämtas från token
+    var result = await _svc.GetScoresForClassAsync(userId, classId, ct);
+    return Ok(result);
+        //var result = await _svc.GetScoresForClassAsync(userId, classId, ct);
+        //return Ok(result);
     }
 
 
