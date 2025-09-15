@@ -19,6 +19,7 @@ public sealed class ScoreDto
 {
     public Guid UserId { get; set; }
     public string? UserName { get; set; }
+    public string? FullName { get; set; }
     public double Score { get; set; }
 }
 
