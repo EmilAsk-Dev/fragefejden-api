@@ -1,10 +1,11 @@
-﻿using System;
+﻿using FrageFejden.Entities;
+using FrageFejden_api.Api;
+using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using FrageFejden.Entities;
-using Microsoft.EntityFrameworkCore;
-using FrageFejden_api.Api;
+using static FrageFejden.Controllers.TopicsController;
 
 namespace FrageFejden.Services
 {
@@ -43,6 +44,19 @@ namespace FrageFejden.Services
 
         // Quizzes scoped to Topic
         Task<IReadOnlyList<Quiz>> GetTopicQuizzesAsync(Guid topicId, bool onlyPublished = true);
+
+        // Helpers / study text
+        Task<Level?> GetLevelAsync(Guid levelId);
+        Task<LevelStudyDto?> GetLevelStudyAsync(Guid levelId);
+        Task<bool> UpdateLevelStudyTextAsync(Guid levelId, string? studyText);
+
+        // Per-user study-read state
+        Task<LevelStudyReadStatusDto> GetLevelStudyReadStatusAsync(Guid levelId, Guid userId);
+        Task MarkLevelStudyReadAsync(Guid levelId, Guid userId);
+
+        Task<TopicProgressDto?> CompleteLevelAsync(Guid topicId, Guid levelId, Guid userId);
+
+
     }
 
     // ===== Implementation =====
@@ -230,11 +244,11 @@ namespace FrageFejden.Services
 
             if (topic is null) return null;
 
-            // XP is tracked at Subject
+            // ⚠️ Topic-scoped XP (take MAX in case you have multiple rows per topic/level)
             var xp = await _context.UserProgresses
-                .Where(up => up.UserId == userId && up.SubjectId == topic.SubjectId)
+                .Where(up => up.UserId == userId && up.TopicId == topicId)
                 .Select(up => (int?)up.Xp)
-                .FirstOrDefaultAsync() ?? 0;
+                .MaxAsync() ?? 0;
 
             var levels = topic.Levels.OrderBy(l => l.LevelNumber).ToList();
 
@@ -271,6 +285,7 @@ namespace FrageFejden.Services
             return dto;
         }
 
+
         // ---- Quizzes for Topic ----
         public async Task<IReadOnlyList<Quiz>> GetTopicQuizzesAsync(Guid topicId, bool onlyPublished = true)
         {
@@ -282,5 +297,144 @@ namespace FrageFejden.Services
 
             return await q.OrderByDescending(z => z.CreatedAt).ToListAsync();
         }
+
+        public Task<Level?> GetLevelAsync(Guid levelId)
+        {
+            return _context.Levels
+                .Include(l => l.Topic)
+                .FirstOrDefaultAsync(l => l.Id == levelId);
+        }
+
+        public async Task<LevelStudyDto?> GetLevelStudyAsync(Guid levelId)
+        {
+            var l = await _context.Levels.AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == levelId);
+            if (l is null) return null;
+
+            return new LevelStudyDto
+            {
+                LevelId = l.Id,
+                TopicId = l.TopicId,
+                LevelNumber = l.LevelNumber,
+                Title = l.Title,
+                MinXpUnlock = l.MinXpUnlock,
+                StudyText = l.StudyText
+            };
+        }
+
+        public async Task<bool> UpdateLevelStudyTextAsync(Guid levelId, string? studyText)
+        {
+            var level = await _context.Levels.FirstOrDefaultAsync(l => l.Id == levelId);
+            if (level is null) return false;
+
+            level.StudyText = string.IsNullOrWhiteSpace(studyText) ? null : studyText;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<LevelStudyReadStatusDto> GetLevelStudyReadStatusAsync(Guid levelId, Guid userId)
+        {
+            var up = await _context.UserProgresses.AsNoTracking()
+                .FirstOrDefaultAsync(p => p.UserId == userId && p.LevelId == levelId);
+
+            return new LevelStudyReadStatusDto
+            {
+                HasReadStudyText = up?.HasReadStudyText ?? false,
+                ReadAt = up?.ReadAt
+            };
+        }
+
+        public async Task MarkLevelStudyReadAsync(Guid levelId, Guid userId)
+        {
+            // Need SubjectId/TopicId to keep your UserProgress normalized
+            var level = await _context.Levels
+                .Include(l => l.Topic)
+                .FirstOrDefaultAsync(l => l.Id == levelId);
+            if (level is null) throw new ArgumentException("Level not found.", nameof(levelId));
+
+            var subjectId = level.Topic.SubjectId;
+            var topicId = level.TopicId;
+
+            var up = await _context.UserProgresses
+                .FirstOrDefaultAsync(p => p.UserId == userId && p.LevelId == levelId);
+
+            if (up is null)
+            {
+                up = new UserProgress
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = userId,
+                    SubjectId = subjectId,
+                    TopicId = topicId,
+                    LevelId = levelId,
+                    Xp = 0,
+                    LastActivity = DateTime.UtcNow,
+                    HasReadStudyText = true,
+                    ReadAt = DateTime.UtcNow
+                };
+                _context.UserProgresses.Add(up);
+            }
+            else
+            {
+                if (!up.HasReadStudyText)
+                {
+                    up.HasReadStudyText = true;
+                    up.ReadAt = DateTime.UtcNow;
+                }
+                up.LastActivity = DateTime.UtcNow;
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<TopicProgressDto?> CompleteLevelAsync(Guid topicId, Guid levelId, Guid userId)
+        {
+            var topic = await _context.Topics
+                .Include(t => t.Subject)
+                .Include(t => t.Levels)
+                .FirstOrDefaultAsync(t => t.Id == topicId);
+
+            if (topic is null) return null;
+
+            var levels = topic.Levels.OrderBy(l => l.LevelNumber).ToList();
+            var current = levels.FirstOrDefault(l => l.Id == levelId);
+            if (current is null) return null;
+
+            var next = levels.SkipWhile(l => l.Id != levelId).Skip(1).FirstOrDefault();
+
+            // ⚠️ Topic-scoped XP row (LevelId == null means “aggregate for topic”)
+            var up = await _context.UserProgresses.FirstOrDefaultAsync(x =>
+                x.UserId == userId &&
+                x.SubjectId == topic.SubjectId &&
+                x.TopicId == topicId &&
+                x.LevelId == null
+            );
+
+            if (up is null)
+            {
+                up = new UserProgress
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = userId,
+                    SubjectId = topic.SubjectId,
+                    TopicId = topicId,
+                    LevelId = null,         // topic aggregate row
+                    Xp = 0,
+                    LastActivity = DateTime.UtcNow
+                };
+                _context.UserProgresses.Add(up);
+            }
+
+            if (next != null && up.Xp < next.MinXpUnlock)
+            {
+                up.Xp = next.MinXpUnlock;
+            }
+
+            up.LastActivity = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            return await GetTopicProgressAsync(topicId, userId);
+        }
+
     }
 }

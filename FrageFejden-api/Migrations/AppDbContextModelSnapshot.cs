@@ -379,6 +379,9 @@ namespace FrageFejden_api.Migrations
                     b.Property<int>("MinXpUnlock")
                         .HasColumnType("int");
 
+                    b.Property<string>("StudyText")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Title")
                         .HasColumnType("nvarchar(max)");
 
@@ -679,11 +682,20 @@ namespace FrageFejden_api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<bool>("HasReadStudyText")
+                        .HasColumnType("bit");
+
                     b.Property<DateTime?>("LastActivity")
                         .HasColumnType("datetime2");
 
                     b.Property<Guid?>("LevelId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("LevelId1")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<Guid>("SubjectId")
                         .HasColumnType("uniqueidentifier");
@@ -700,6 +712,8 @@ namespace FrageFejden_api.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("LevelId");
+
+                    b.HasIndex("LevelId1");
 
                     b.HasIndex("SubjectId");
 
@@ -1239,6 +1253,10 @@ namespace FrageFejden_api.Migrations
                         .HasForeignKey("LevelId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("FrageFejden.Entities.Level", null)
+                        .WithMany("UserProgress")
+                        .HasForeignKey("LevelId1");
+
                     b.HasOne("FrageFejden.Entities.Subject", "Subject")
                         .WithMany("UserProgresses")
                         .HasForeignKey("SubjectId")
@@ -1354,6 +1372,8 @@ namespace FrageFejden_api.Migrations
             modelBuilder.Entity("FrageFejden.Entities.Level", b =>
                 {
                     b.Navigation("Quizzes");
+
+                    b.Navigation("UserProgress");
                 });
 
             modelBuilder.Entity("FrageFejden.Entities.Question", b =>

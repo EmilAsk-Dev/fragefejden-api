@@ -19,5 +19,11 @@ namespace FrageFejden.Entities
 
         public int Xp { get; set; }
         public DateTime? LastActivity { get; set; }
+
+        
+        public bool HasReadStudyText { get; set; } = false;
+
+        
+        public DateTime? ReadAt { get; set; }
     }
 }

@@ -68,6 +68,27 @@ namespace FrageFejden.Controllers
             public int? MinXpUnlock { get; set; }
         }
 
+        public class LevelStudyDto
+        {
+            public Guid LevelId { get; set; }
+            public Guid TopicId { get; set; }
+            public int LevelNumber { get; set; }
+            public string? Title { get; set; }
+            public int MinXpUnlock { get; set; }
+            public string? StudyText { get; set; }
+        }
+
+        public class LevelStudyUpdateDto
+        {
+            public string? StudyText { get; set; }
+        }
+
+        public class LevelStudyReadStatusDto
+        {
+            public bool HasReadStudyText { get; set; }
+            public DateTime? ReadAt { get; set; }
+        }
+
         // ======================
         // Topic CRUD / queries
         // ======================
@@ -235,6 +256,86 @@ namespace FrageFejden.Controllers
 
             var items = await _topics.GetTopicQuizzesAsync(topicId, onlyPublished);
             return Ok(items);
+        }
+
+        [HttpGet("{topicId:guid}/levels/{levelId:guid}/study")]
+        [SwaggerOperation(Summary = "Get level study text")]
+        [ProducesResponseType(typeof(LevelStudyDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetLevelStudy(Guid topicId, Guid levelId)
+        {
+            if (!UserIsIn("admin", "teacher", "student")) return Forbid();
+
+            var level = await _topics.GetLevelAsync(levelId);
+            if (level is null || level.TopicId != topicId) return NotFound();
+
+            var dto = await _topics.GetLevelStudyAsync(levelId);
+            return dto is null ? NotFound() : Ok(dto);
+        }
+
+        [HttpPut("{topicId:guid}/levels/{levelId:guid}/study")]
+        [SwaggerOperation(Summary = "Set or update level study text")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> UpdateLevelStudy(Guid topicId, Guid levelId, [FromBody] LevelStudyUpdateDto body)
+        {
+            if (!UserIsIn("admin", "teacher")) return Forbid();
+            if (body is null) return BadRequest("Body required.");
+
+            var level = await _topics.GetLevelAsync(levelId);
+            if (level is null || level.TopicId != topicId) return NotFound();
+
+            var ok = await _topics.UpdateLevelStudyTextAsync(levelId, body.StudyText);
+            return ok ? NoContent() : NotFound();
+        }
+
+        [HttpPost("{topicId:guid}/levels/{levelId:guid}/study/read")]
+        [SwaggerOperation(Summary = "Mark study text as read for the current user")]
+        [ProducesResponseType(typeof(LevelStudyReadStatusDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> MarkStudyRead(Guid topicId, Guid levelId)
+        {
+            if (!UserIsIn("admin", "teacher", "student")) return Forbid();
+            var userId = GetUserId();
+            if (userId is null) return Unauthorized();
+
+            var level = await _topics.GetLevelAsync(levelId);
+            if (level is null || level.TopicId != topicId) return NotFound();
+
+            await _topics.MarkLevelStudyReadAsync(levelId, userId.Value);
+            var status = await _topics.GetLevelStudyReadStatusAsync(levelId, userId.Value);
+            return Ok(status);
+        }
+
+        [HttpGet("{topicId:guid}/levels/{levelId:guid}/study/read")]
+        [SwaggerOperation(Summary = "Get current user's study-read status for a level")]
+        [ProducesResponseType(typeof(LevelStudyReadStatusDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetStudyReadStatus(Guid topicId, Guid levelId)
+        {
+            if (!UserIsIn("admin", "teacher", "student")) return Forbid();
+            var userId = GetUserId();
+            if (userId is null) return Unauthorized();
+
+            var level = await _topics.GetLevelAsync(levelId);
+            if (level is null || level.TopicId != topicId) return NotFound();
+
+            var status = await _topics.GetLevelStudyReadStatusAsync(levelId, userId.Value);
+            return Ok(status);
+        }
+
+        [HttpPost("{topicId:guid}/levels/{levelId:guid}/complete")]
+        [SwaggerOperation(Summary = "Mark current level quiz as completed and advance XP to unlock next level")]
+        [ProducesResponseType(typeof(TopicProgressDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> CompleteLevel(Guid topicId, Guid levelId)
+        {
+            var userId = GetUserId();
+            if (userId is null) return Unauthorized();
+            if (!UserIsIn("admin", "teacher", "student")) return Forbid();
+
+            var dto = await _topics.CompleteLevelAsync(topicId, levelId, userId.Value);
+            return dto is null ? NotFound() : Ok(dto);
         }
 
         // ===== helpers =====

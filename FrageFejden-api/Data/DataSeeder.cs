@@ -281,31 +281,96 @@ namespace FrageFejden.Data
             _context.Set<Topic>().AddRange(topics);
         }
 
-        // ===== Levels (UNDER TOPIC ONLY) =====
         private async Task SeedLevelsAsync()
         {
-            var topicIds = await _context.Set<Topic>()
-                .Select(t => t.Id)
+            // Fetch topics by name so we can give each a different max level & XP curve
+            var topics = await _context.Set<Topic>()
+                .Select(t => new { t.Id, t.Name, t.SubjectId })
                 .ToListAsync();
 
-            var levels = new List<Level>();
-            foreach (var topicId in topicIds)
+            // Per-topic plan: (maxLevels, MinXpUnlock function per levelNumber)
+            // Tip: tweak the XP curves below to shape how many levels Mary sees as unlocked
+            var plan = new Dictionary<string, (int max, Func<int, int> xp)>
             {
-                for (int i = 1; i <= 5; i++)
+                // Algebra (Math): 10 levels, gradual steps
+                ["Algebra"] = (10, i => (i - 1) * 150),                 // 0,150,300,...,1350
+
+                // Geometry (Math): 5 levels, non-linear steps (harder gates)
+                ["Geometry"] = (5, i => i switch
+                {
+                    1 => 0,
+                    2 => 300,
+                    3 => 700,
+                    4 => 1100,
+                    5 => 1500,
+                    _ => (i - 1) * 300
+                }),
+
+                // Physics (Science): 3 levels, moderate steps
+                ["Physics"] = (3, i => i switch
+                {
+                    1 => 0,
+                    2 => 400,
+                    3 => 900,
+                    _ => (i - 1) * 400
+                }),
+
+                // Biology (Science): 5 levels, steady steps
+                ["Biology"] = (5, i => (i - 1) * 200)
+            };
+
+            var levels = new List<Level>();
+
+            foreach (var t in topics)
+            {
+                var (max, xpFn) = plan.TryGetValue(t.Name, out var p)
+                    ? p
+                    : (5, new Func<int, int>(i => (i - 1) * 200)); // default fallback if new topics appear
+
+                for (int i = 1; i <= max; i++)
                 {
                     levels.Add(new Level
                     {
                         Id = Guid.NewGuid(),
-                        TopicId = topicId,
+                        TopicId = t.Id,
                         LevelNumber = i,
-                        Title = $"Level {i}",
-                        MinXpUnlock = (i - 1) * 200
+                        Title = $"{t.Name} – Nivå {i}",
+                        MinXpUnlock = xpFn(i),
+                        StudyText = BuildStudyText(t.Name, i)
                     });
                 }
             }
 
             _context.Set<Level>().AddRange(levels);
         }
+
+        private static string BuildStudyText(string topicName, int level)
+        {
+                        return $@"
+            ## {topicName} – Nivå {level}
+
+            Det här är studiematerialet för **{topicName}**, nivå **{level}**.
+
+            **Mål för nivån**
+            - Centrala begrepp för nivå {level} inom {topicName}.
+            - Miniförklaringar + korta exempel.
+            - Förberedelse inför quizet.
+
+            **Lässtrategi**
+            1. Skumma igenom rubriker.
+            2. Läs exemplen noggrant.
+            3. Testa dig själv innan quizet.
+
+            **Exempel**
+            - [{topicName}] En enkel uppgift på nivå {level} med lösningssteg.
+
+            > Markera som läst när du är klar. 
+            ";
+        }
+
+
+
+
 
         // ===== Memberships (John is teacher for Mary's class 9B) =====
         private async Task SeedClassMembershipsAsync()
@@ -765,44 +830,116 @@ namespace FrageFejden.Data
         }
 
         // ===== User Progress (more for Mary; tracked at Subject, optionally Topic/Level) =====
+        // ===== User Progress (more for Mary; tracked at Subject, optionally Topic/Level) =====
         private async Task SeedUserProgressAsync()
         {
             var mary = Guid.Parse("22222222-2222-2222-2222-222222222222");
             var bob = Guid.Parse("33333333-3333-3333-3333-333333333333");
 
-            var progress = new[]
-            {
-                // Mary strong in Math & Science
-                new UserProgress
-                {
-                    Id = Guid.NewGuid(),
-                    UserId = mary,
-                    SubjectId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"), // Math
-                    Xp = 750,
-                    LastActivity = DateTime.UtcNow.AddHours(-3)
-                },
-                new UserProgress
-                {
-                    Id = Guid.NewGuid(),
-                    UserId = mary,
-                    SubjectId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"), // Science
-                    Xp = 520,
-                    LastActivity = DateTime.UtcNow.AddHours(-5)
-                },
+            var mathSubjectId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+            var scienceSubjectId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
 
-                // Bob baseline
-                new UserProgress
+            // Find Algebra topic & its Level 1/2 for realistic read states
+            var algebra = await _context.Set<Topic>()
+                .FirstOrDefaultAsync(t => t.SubjectId == mathSubjectId && t.Name == "Algebra");
+
+            Guid? algebraL1 = null;
+            Guid? algebraL2 = null;
+
+            if (algebra != null)
+            {
+                var alLevels = await _context.Set<Level>()
+                    .Where(l => l.TopicId == algebra.Id && (l.LevelNumber == 1 || l.LevelNumber == 2))
+                    .ToDictionaryAsync(l => l.LevelNumber, l => l.Id);
+
+                algebraL1 = alLevels.TryGetValue(1, out var l1) ? l1 : (Guid?)null;
+                algebraL2 = alLevels.TryGetValue(2, out var l2) ? l2 : (Guid?)null;
+            }
+
+            var now = DateTime.UtcNow;
+
+            var progress = new List<UserProgress>
+    {
+        // ----- Subject-level XP progress -----
+        new UserProgress
+        {
+            Id = Guid.NewGuid(),
+            UserId = mary,
+            SubjectId = mathSubjectId,
+            Xp = 750,
+            LastActivity = now.AddHours(-3)
+        },
+        new UserProgress
+        {
+            Id = Guid.NewGuid(),
+            UserId = mary,
+            SubjectId = scienceSubjectId,
+            Xp = 520,
+            LastActivity = now.AddHours(-5)
+        },
+        new UserProgress
+        {
+            Id = Guid.NewGuid(),
+            UserId = bob,
+            SubjectId = mathSubjectId,
+            Xp = 320,
+            LastActivity = now.AddDays(-1)
+        }
+    };
+
+            // ----- Per-level study-read states -----
+            // Mary: has read Algebra Level 1 (so she can take the quiz), not yet Level 2
+            if (algebra != null && algebraL1.HasValue)
+            {
+                progress.Add(new UserProgress
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = mary,
+                    SubjectId = algebra.SubjectId,
+                    TopicId = algebra.Id,
+                    LevelId = algebraL1.Value,
+                    Xp = 0, // per-level XP not required; subject XP used elsewhere
+                    LastActivity = now.AddDays(-1),
+                    HasReadStudyText = true,
+                    ReadAt = now.AddDays(-1)
+                });
+            }
+            if (algebra != null && algebraL2.HasValue)
+            {
+                progress.Add(new UserProgress
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = mary,
+                    SubjectId = algebra.SubjectId,
+                    TopicId = algebra.Id,
+                    LevelId = algebraL2.Value,
+                    Xp = 0,
+                    LastActivity = now.AddHours(-12),
+                    HasReadStudyText = false,
+                    ReadAt = null
+                });
+            }
+
+            // Bob: hasn’t read Algebra Level 1 yet (explicit row showing not-read)
+            if (algebra != null && algebraL1.HasValue)
+            {
+                progress.Add(new UserProgress
                 {
                     Id = Guid.NewGuid(),
                     UserId = bob,
-                    SubjectId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
-                    Xp = 320,
-                    LastActivity = DateTime.UtcNow.AddDays(-1)
-                }
-            };
+                    SubjectId = algebra.SubjectId,
+                    TopicId = algebra.Id,
+                    LevelId = algebraL1.Value,
+                    Xp = 0,
+                    LastActivity = now.AddDays(-2),
+                    HasReadStudyText = false,
+                    ReadAt = null
+                });
+            }
 
             _context.Set<UserProgress>().AddRange(progress);
         }
+
 
         // ===== AI Generations =====
         private async Task SeedAiGenerationsAsync()

@@ -19,7 +19,7 @@ namespace FrageFejden.Entities
         public bool SourceAi { get; set; } = false;
         public Guid CreatedById { get; set; }
         public Guid? ApprovedById { get; set; }
-        public DateTime CreatedAt { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.Now.AddHours(2);
 
         public Subject Subject { get; set; } = null!;
         public Topic? Topic { get; set; }

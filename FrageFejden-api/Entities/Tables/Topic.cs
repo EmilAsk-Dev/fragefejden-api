@@ -17,5 +17,6 @@ namespace FrageFejden.Entities
         public ICollection<Question> Questions { get; set; } = new List<Question>();
         public ICollection<AiTemplate> AiTemplates { get; set; } = new List<AiTemplate>();
         public ICollection<Quiz> Quizzes { get; set; } = new List<Quiz>();
+
     }
 }
