@@ -242,6 +242,7 @@ public sealed class ClassService : IClassService
                 {
                     UserId = u.Id,
                     UserName = u.FullName,
+                    FullName = u.FullName,
                     Score = u.experiencePoints
                 })
             .ToListAsync(ct);
