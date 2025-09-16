@@ -51,4 +51,10 @@ public interface IClassService
 
     Task<double?> GetPointsForUser(Guid userId, CancellationToken ct);
     Task<List<ScoreDto>> GetScoresForClassAsync(Guid userId, Guid classId, CancellationToken ct);
+
+
+    // Lärare ska kunna hämta sina klasser och elever (Readonly)
+    Task<IReadOnlyList<MyClassDto>> GetMyCreatedClassesAsync(Guid teacherId, CancellationToken ct);
+    Task<IReadOnlyList<MemberDto>> GetStudentsForCreatedClassAsync(Guid classId, Guid teacherId, CancellationToken ct);
+
 }
