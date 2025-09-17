@@ -99,6 +99,4 @@ public sealed class ClassesController : ControllerBase
         //var result = await _svc.GetScoresForClassAsync(userId, classId, ct);
         //return Ok(result);
     }
-
-
 }
