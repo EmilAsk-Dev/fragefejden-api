@@ -15,6 +15,7 @@ public class ScoreService
         public int TotalExp { get; set; }
     }
 
+    // Lägger till exp för en användare inom ett specifikt ämne och uppdaterar totalpoäng i users-tabellen
     public async Task AddExpAsync(Guid userId, Guid subjectId, int exp)
     {
         var entry = new ScoreEntry
@@ -27,15 +28,12 @@ public class ScoreService
 
         _db.ScoreEntries.Add(entry);
 
-        //Uppdatera användarens totala poäng i usertabellen
+        // Uppdatera användarens totalpoäng i users-tabellen
         var user = await _db.Users.FindAsync(userId);
         if (user != null)
         {
-            var totalExp = await _db.ScoreEntries
-                .Where(s => s.UserId == userId)
-                .SumAsync(s => s.exp);
+            user.experiencePoints += exp; 
         }
-
 
         await _db.SaveChangesAsync();
     }
