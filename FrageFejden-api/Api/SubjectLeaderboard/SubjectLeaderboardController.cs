@@ -1,6 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 
+public class ExpDto
+{
+    public int Exp { get; set; }
+}
 
+    
 [ApiController]
 [Route("api/[controller]")]
 public class SubjectLeaderboardController : ControllerBase
@@ -28,4 +33,15 @@ public class SubjectLeaderboardController : ControllerBase
         var score = await _scoreService.GetSubjectExperienceAsync(userId, subjectId);
         return Ok(new { score });
     }
+
+    //Post /Subject/{subjectId}/user/{userId}/entries
+    //endpoint för att lägga till exp för en användare inom ett specifikt ämne
+    [HttpPost("{subjectId}/user/{userId}/entries")]
+    public async Task<IActionResult> AddExpToSubject(Guid subjectId, Guid userId, [FromBody] ExpDto dto)
+    {
+        await _scoreService.AddExpAsync(userId, subjectId, dto.Exp);
+        return Ok();
+    }
+
+  
 }
