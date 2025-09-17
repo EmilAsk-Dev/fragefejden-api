@@ -121,7 +121,7 @@ builder.Services.AddScoped<ITopicService, TopicService>();
 builder.Services.AddScoped<IClassService, ClassService>();
 builder.Services.AddScoped<IDuelService, DuelService>();
 builder.Services.AddScoped<DailyQuestionService>();
-
+builder.Services.AddScoped<ScoreService>();
 builder.Services.AddSingleton<QuestionBank>();        
 builder.Services.AddScoped<DailyQuestionService>();
 
