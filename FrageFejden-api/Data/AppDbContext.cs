@@ -35,7 +35,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
 
     public DbSet<UnlockRule> UnlockRules { get; set; }
     public DbSet<UserProgress> UserProgresses { get; set; }
-
+§   public DbSet<ScoreEntry> ScoreEntries { get; set; }
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
