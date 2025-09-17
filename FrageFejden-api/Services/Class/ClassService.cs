@@ -3,6 +3,7 @@ using FrageFejden.Entities.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Net;
 using System.Security.Claims;
 using System.Security.Cryptography;
 //using FrageFejden.Data;
@@ -262,6 +263,7 @@ public sealed class ClassService : IClassService
                 {
                     UserId = u.Id,
                     UserName = u.FullName,
+                    FullName = u.FullName,
                     Score = u.experiencePoints
                 })
             .ToListAsync(ct);
@@ -281,4 +283,80 @@ public sealed class ClassService : IClassService
 
         return klass is null ? null : (klass.Id, klass.Name);
     }
+
+
+    // NYTT
+
+    // Metod för att hämta alla klasser som den inloggade läraren har skapat (dvs.Classes.CreatedById == teacherId).
+    public async Task<IReadOnlyList<MyClassDto>> GetMyCreatedClassesAsync(Guid teacherId, CancellationToken ct)
+    {
+        var classSummaries = await _db.Classes
+            .AsNoTracking()
+            .Where(classEntity => classEntity.CreatedById == teacherId)
+            .Select(classEntity => new
+            {
+                ClassId = classEntity.Id,
+                Name = classEntity.Name,
+                GradeLabel = classEntity.GradeLabel,
+                classEntity.JoinCode,
+                classEntity.CreatedById,
+                classEntity.CreatedAt,
+                TeacherMembership = classEntity.Memberships
+                    .Where(membership => membership.UserId == teacherId)
+                    .Select(membership => new { membership.RoleInClass, membership.EnrolledAt })
+                    .FirstOrDefault()
+            })
+            .OrderBy(classSummary => classSummary.Name)
+            .ToListAsync(ct);
+
+        var classes = classSummaries.Select(classSummary =>
+        {
+            var role = classSummary.TeacherMembership != null ? classSummary.TeacherMembership.RoleInClass : Role.teacher;
+            var enrolledAt = classSummary.TeacherMembership != null ? classSummary.TeacherMembership.EnrolledAt : classSummary.CreatedAt;
+
+            // MyClassDto ctor: (ClassId, RoleInClass, EnrolledAt, Id, Name, GradeLabel, JoinCode, CreatedById, CreatedAt)
+            return new MyClassDto(
+                classSummary.ClassId,
+                role,
+                enrolledAt,
+                classSummary.ClassId,
+                classSummary.Name,
+                classSummary.GradeLabel,
+                classSummary.JoinCode,
+                classSummary.CreatedById,
+                classSummary.CreatedAt
+            );
+        }).ToList();
+
+        return classes;
+    }
+
+    // Hämtar eleverna (Role.student) i en given klass som läraren äger/undervisar i.
+    public async Task<IReadOnlyList<MemberDto>> GetStudentsForCreatedClassAsync(Guid classId, Guid teacherId, CancellationToken ct)
+    {
+        if (!await IsTeacherOrOwnerAsync(classId, teacherId, ct))
+            throw new UnauthorizedAccessException();
+
+        var students = await _db.ClassMemberships
+            .AsNoTracking()
+            .Where(membership => membership.ClassId == classId && membership.RoleInClass == Role.student)
+            .OrderBy(membership => membership.User.FullName)
+            .Select(membership => new MemberDto(
+                membership.UserId,         // UserId
+                membership.RoleInClass,    // RoleInClass
+                membership.EnrolledAt,     // EnrolledAt
+                membership.User.Id,        // Id
+                membership.User.FullName,  // FullName
+                membership.User.Email,     // Email
+                membership.User.AvatarUrl  // AvatarUrl
+            ))
+            .ToListAsync(ct);
+
+        return students;
+    }
+
+
+
+
+
 }

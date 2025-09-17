@@ -19,6 +19,7 @@ public sealed class ScoreDto
 {
     public Guid UserId { get; set; }
     public string? UserName { get; set; }
+    public string? FullName { get; set; }
     public double Score { get; set; }
 }
 
@@ -58,5 +59,11 @@ public interface IClassService
     Task<List<ScoreDto>> GetScoresForClassAsync(Guid userId, Guid classId, CancellationToken ct);
 
     Task<IEnumerable<VisibleMemberDto>> GetVisibleMembersAsync(Guid classId, Guid callerId, CancellationToken ct);
+
+
+
+    // Lärare ska kunna hämta sina klasser och elever (Readonly)
+    Task<IReadOnlyList<MyClassDto>> GetMyCreatedClassesAsync(Guid teacherId, CancellationToken ct);
+    Task<IReadOnlyList<MemberDto>> GetStudentsForCreatedClassAsync(Guid classId, Guid teacherId, CancellationToken ct);
 
 }
