@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using FrageFejden.Entities;
 using FrageFejden.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Swashbuckle.AspNetCore.Annotations;
 using FrageFejden_api.Api;
+using FrageFejden.Entities;
 
 namespace FrageFejden.Controllers
 {
@@ -28,7 +28,7 @@ namespace FrageFejden.Controllers
             _db = db;
         }
 
-        // ===== DTOs (local) =====
+        
         public class TopicDto
         {
             public Guid Id { get; set; }
@@ -89,9 +89,7 @@ namespace FrageFejden.Controllers
             public DateTime? ReadAt { get; set; }
         }
 
-        // ======================
-        // Topic CRUD / queries
-        // ======================
+  
 
         [HttpGet("{topicId:guid}")]
         [SwaggerOperation(Summary = "Get a topic by id")]
@@ -158,9 +156,7 @@ namespace FrageFejden.Controllers
             return ok ? NoContent() : NotFound();
         }
 
-        // ======================
-        // Levels under a Topic
-        // ======================
+        
 
         [HttpGet("{topicId:guid}/levels")]
         [SwaggerOperation(Summary = "List levels for a topic")]
@@ -229,9 +225,7 @@ namespace FrageFejden.Controllers
             return ok ? NoContent() : NotFound();
         }
 
-        // ======================
-        // Progress & Quizzes
-        // ======================
+     
 
         [HttpGet("{topicId:guid}/progress")]
         [SwaggerOperation(Summary = "Get level progress for a topic (current user)")]
@@ -249,7 +243,7 @@ namespace FrageFejden.Controllers
 
         [HttpGet("{topicId:guid}/quizzes")]
         [SwaggerOperation(Summary = "List quizzes scoped to a topic")]
-        [ProducesResponseType(typeof(IEnumerable<Quiz>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(IEnumerable<Entities.Quiz>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetTopicQuizzes(Guid topicId, [FromQuery] bool onlyPublished = true)
         {
             if (!UserIsIn("admin", "teacher", "student")) return Forbid();
@@ -338,7 +332,7 @@ namespace FrageFejden.Controllers
             return dto is null ? NotFound() : Ok(dto);
         }
 
-        // ===== helpers =====
+      
         private static TopicDto ToDto(Topic t) => new TopicDto
         {
             Id = t.Id,

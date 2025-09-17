@@ -120,6 +120,8 @@ builder.Services.AddScoped<ISubjectService, SubjectService>();
 builder.Services.AddScoped<ITopicService, TopicService>();
 builder.Services.AddScoped<IClassService, ClassService>();
 builder.Services.AddScoped<IDuelService, DuelService>();
+builder.Services.AddScoped<IQuizService, QuizService>();
+builder.Services.AddScoped<IProgressService, ProgressService>();
 builder.Services.AddScoped<DailyQuestionService>();
 
 builder.Services.AddSingleton<QuestionBank>();        

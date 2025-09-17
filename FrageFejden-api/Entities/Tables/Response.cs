@@ -16,6 +16,8 @@ namespace FrageFejden.Entities
         public bool IsCorrect { get; set; }
         public int? TimeMs { get; set; }
 
+        public DateTime AnsweredAt { get; set; }
+
         public Attempt Attempt { get; set; } = null!;
         public Question Question { get; set; } = null!;
         public QuestionOption? SelectedOption { get; set; }

@@ -50,5 +50,14 @@ public sealed class ClassMembershipsController : ControllerBase
         catch (UnauthorizedAccessException) { return Forbid(); }
     }
 
-    
+    [SwaggerOperation(
+    Summary = "Synliga klassmedlemmar (för elever & lärare)",
+    Description = "Returnerar en lista över synliga medlemmar för alla som är med i klassen."
+)]
+    [HttpGet("visible"), Authorize]
+    public async Task<IActionResult> Visible(Guid id, CancellationToken ct)
+    {
+        try { return Ok(await _svc.GetVisibleMembersAsync(id, UserId(), ct)); }
+        catch (UnauthorizedAccessException) { return Forbid(); }
+    }
 }

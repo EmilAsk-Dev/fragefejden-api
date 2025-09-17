@@ -187,9 +187,6 @@ namespace FrageFejden_api.Migrations
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("LevelIdAtTime")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<Guid>("QuizId")
                         .HasColumnType("uniqueidentifier");
 
@@ -206,8 +203,6 @@ namespace FrageFejden_api.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("LevelIdAtTime");
 
                     b.HasIndex("QuizId");
 
@@ -346,14 +341,31 @@ namespace FrageFejden_api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("AlternativesSnapshot")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("CorrectIndexSnapshot")
+                        .HasColumnType("int");
+
                     b.Property<Guid>("DuelId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("EndedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<Guid>("QuestionId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("RoundNumber")
                         .HasColumnType("int");
+
+                    b.Property<DateTime>("StartedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("TextSnapshot")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("TimeLimitSeconds")
                         .HasColumnType("int");
@@ -372,6 +384,10 @@ namespace FrageFejden_api.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("LevelNumber")
                         .HasColumnType("int");
@@ -550,6 +566,9 @@ namespace FrageFejden_api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<DateTime>("AnsweredAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<Guid>("AttemptId")
                         .HasColumnType("uniqueidentifier");
 
@@ -682,20 +701,35 @@ namespace FrageFejden_api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int?>("BestScore")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("CanRetry")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<bool>("HasReadStudyText")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsLevelCompleted")
                         .HasColumnType("bit");
 
                     b.Property<DateTime?>("LastActivity")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("LevelId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<DateTime?>("LastRetryAt")
+                        .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("LevelId1")
+                    b.Property<Guid?>("LevelId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("ReadAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<int>("RetryCount")
+                        .HasColumnType("int");
 
                     b.Property<Guid>("SubjectId")
                         .HasColumnType("uniqueidentifier");
@@ -713,15 +747,85 @@ namespace FrageFejden_api.Migrations
 
                     b.HasIndex("LevelId");
 
-                    b.HasIndex("LevelId1");
-
                     b.HasIndex("SubjectId");
 
                     b.HasIndex("TopicId");
 
-                    b.HasIndex("UserId", "SubjectId", "TopicId", "LevelId");
+                    b.HasIndex("UserId", "LevelId")
+                        .IsUnique()
+                        .HasFilter("[LevelId] IS NOT NULL");
 
                     b.ToTable("UserProgresses");
+                });
+
+            modelBuilder.Entity("FrageFejden_api.Entities.Tables.AttemptAnswer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("AnsweredAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<Guid>("AttemptId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsCorrect")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("QuestionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("SelectedOptionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("TimeMs")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AttemptId");
+
+                    b.HasIndex("QuestionId");
+
+                    b.HasIndex("SelectedOptionId");
+
+                    b.ToTable("AttemptAnswers");
+                });
+
+            modelBuilder.Entity("FrageFejden_api.Entities.Tables.DuelAnswer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("AnsweredAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("DuelRoundId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsCorrect")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("SelectedIndex")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TimeMs")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DuelRoundId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("DuelAnswer");
                 });
 
             modelBuilder.Entity("FrageFejden_api.Entities.Tables.UserDailyQuestion", b =>
@@ -937,11 +1041,6 @@ namespace FrageFejden_api.Migrations
 
             modelBuilder.Entity("FrageFejden.Entities.Attempt", b =>
                 {
-                    b.HasOne("FrageFejden.Entities.Level", "LevelAtTime")
-                        .WithMany()
-                        .HasForeignKey("LevelIdAtTime")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.HasOne("FrageFejden.Entities.Quiz", "Quiz")
                         .WithMany("Attempts")
                         .HasForeignKey("QuizId")
@@ -953,8 +1052,6 @@ namespace FrageFejden_api.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("LevelAtTime");
 
                     b.Navigation("Quiz");
 
@@ -1169,7 +1266,7 @@ namespace FrageFejden_api.Migrations
             modelBuilder.Entity("FrageFejden.Entities.Response", b =>
                 {
                     b.HasOne("FrageFejden.Entities.Attempt", "Attempt")
-                        .WithMany("Responses")
+                        .WithMany()
                         .HasForeignKey("AttemptId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1249,13 +1346,9 @@ namespace FrageFejden_api.Migrations
             modelBuilder.Entity("FrageFejden.Entities.UserProgress", b =>
                 {
                     b.HasOne("FrageFejden.Entities.Level", "Level")
-                        .WithMany()
+                        .WithMany("UserProgress")
                         .HasForeignKey("LevelId")
                         .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("FrageFejden.Entities.Level", null)
-                        .WithMany("UserProgress")
-                        .HasForeignKey("LevelId1");
 
                     b.HasOne("FrageFejden.Entities.Subject", "Subject")
                         .WithMany("UserProgresses")
@@ -1264,7 +1357,7 @@ namespace FrageFejden_api.Migrations
                         .IsRequired();
 
                     b.HasOne("FrageFejden.Entities.Topic", "Topic")
-                        .WithMany()
+                        .WithMany("UserProgresses")
                         .HasForeignKey("TopicId")
                         .OnDelete(DeleteBehavior.NoAction);
 
@@ -1279,6 +1372,52 @@ namespace FrageFejden_api.Migrations
                     b.Navigation("Subject");
 
                     b.Navigation("Topic");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("FrageFejden_api.Entities.Tables.AttemptAnswer", b =>
+                {
+                    b.HasOne("FrageFejden.Entities.Attempt", "Attempt")
+                        .WithMany("Answers")
+                        .HasForeignKey("AttemptId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FrageFejden.Entities.Question", "Question")
+                        .WithMany()
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("FrageFejden.Entities.QuestionOption", "SelectedOption")
+                        .WithMany()
+                        .HasForeignKey("SelectedOptionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Attempt");
+
+                    b.Navigation("Question");
+
+                    b.Navigation("SelectedOption");
+                });
+
+            modelBuilder.Entity("FrageFejden_api.Entities.Tables.DuelAnswer", b =>
+                {
+                    b.HasOne("FrageFejden.Entities.DuelRound", "Round")
+                        .WithMany("Answers")
+                        .HasForeignKey("DuelRoundId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FrageFejden.Entities.AppUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Round");
 
                     b.Navigation("User");
                 });
@@ -1350,7 +1489,7 @@ namespace FrageFejden_api.Migrations
 
             modelBuilder.Entity("FrageFejden.Entities.Attempt", b =>
                 {
-                    b.Navigation("Responses");
+                    b.Navigation("Answers");
                 });
 
             modelBuilder.Entity("FrageFejden.Entities.Class", b =>
@@ -1367,6 +1506,11 @@ namespace FrageFejden_api.Migrations
                     b.Navigation("Participants");
 
                     b.Navigation("Rounds");
+                });
+
+            modelBuilder.Entity("FrageFejden.Entities.DuelRound", b =>
+                {
+                    b.Navigation("Answers");
                 });
 
             modelBuilder.Entity("FrageFejden.Entities.Level", b =>
@@ -1416,6 +1560,8 @@ namespace FrageFejden_api.Migrations
                     b.Navigation("Questions");
 
                     b.Navigation("Quizzes");
+
+                    b.Navigation("UserProgresses");
                 });
 #pragma warning restore 612, 618
         }

@@ -5,42 +5,28 @@ namespace FrageFejden.DTOs.Duel
 {
     public class CreateDuelRequest
     {
-        [Required]
-        public Guid SubjectId { get; set; }
-
+        [Required] public Guid SubjectId { get; set; }
         public Guid? LevelId { get; set; }
-
-        [Range(3, 21)]
-        public int BestOf { get; set; } = 5;
+        [Range(3, 21)] public int BestOf { get; set; } = 5;
     }
 
     public class InviteToDuelRequest
     {
-        [Required]
-        public Guid DuelId { get; set; }
-
-        [Required]
-        public Guid InviteeId { get; set; }
+        [Required] public Guid DuelId { get; set; }
+        [Required] public Guid InviteeId { get; set; }
     }
 
     public class DuelActionRequest
     {
-        [Required]
-        public Guid DuelId { get; set; }
+        [Required] public Guid DuelId { get; set; }
     }
 
     public class SubmitDuelAnswerRequest
     {
-        [Required]
-        public Guid DuelId { get; set; }
-
-        [Required]
-        public Guid QuestionId { get; set; }
-
+        [Required] public Guid DuelId { get; set; }
+        [Required] public Guid QuestionId { get; set; }
         public Guid? SelectedOptionId { get; set; }
-
-        [Range(0, int.MaxValue)]
-        public int TimeMs { get; set; }
+        [Range(0, int.MaxValue)] public int TimeMs { get; set; }
     }
 
     public class DuelDto
@@ -104,7 +90,6 @@ namespace FrageFejden.DTOs.Duel
         public int BestStreak { get; set; }
     }
 
-    // Supporting DTOs (you might already have these)
     public class SubjectDto
     {
         public Guid Id { get; set; }

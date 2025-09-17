@@ -1,9 +1,10 @@
-﻿using System;
-using FrageFejden.Entities;
+﻿using FrageFejden.Entities;
 using FrageFejden_api.Entities.Tables;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Reflection.Emit;
 
 public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
 {
@@ -22,6 +23,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
     public DbSet<Question> Questions { get; set; }
     public DbSet<QuestionOption> QuestionOptions { get; set; }
     public DbSet<QuizQuestion> QuizQuestions { get; set; }
+    public DbSet<AttemptAnswer> AttemptAnswers { get; set; } = null!;
 
     public DbSet<AiTemplate> AiTemplates { get; set; }
     public DbSet<AiGeneration> AiGenerations { get; set; }
@@ -68,6 +70,37 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
                 .HasForeignKey(cm => cm.ClassId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
+
+        builder.Entity<AttemptAnswer>(entity =>
+        {
+            entity.HasKey(a => a.Id);
+
+            entity.HasOne(a => a.Attempt)
+                  .WithMany(att => att.Answers)
+                  .HasForeignKey(a => a.AttemptId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(a => a.Question)
+                  .WithMany()
+                  .HasForeignKey(a => a.QuestionId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(a => a.SelectedOption)
+                  .WithMany()
+                  .HasForeignKey(a => a.SelectedOptionId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.Property(a => a.AnsweredAt)
+                  .HasDefaultValueSql("GETUTCDATE()");
+        });
+
+        builder.Entity<DuelRound>()
+            .Property(r => r.AlternativesSnapshot)
+            .HasConversion(
+                v => System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions?)null),
+                v => System.Text.Json.JsonSerializer.Deserialize<List<string>>(v, (System.Text.Json.JsonSerializerOptions?)null)!
+            )
+            .HasColumnType("nvarchar(max)");
 
         // ===== Subject =====
         builder.Entity<Subject>(entity =>
@@ -232,19 +265,12 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
                 .HasForeignKey(a => a.QuizId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            entity.HasOne(a => a.LevelAtTime)
-                .WithMany()
-                .HasForeignKey(a => a.LevelIdAtTime)
-                .OnDelete(DeleteBehavior.SetNull);
+            
         });
 
         builder.Entity<Response>(entity =>
         {
-            entity.HasOne(r => r.Attempt)
-                .WithMany(a => a.Responses)
-                .HasForeignKey(r => r.AttemptId)
-                .OnDelete(DeleteBehavior.Cascade);
-
+            
             entity.HasOne(r => r.Question)
                 .WithMany()
                 .HasForeignKey(r => r.QuestionId)
@@ -301,31 +327,37 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
-        // ===== UserProgress (Subject required; optional Topic/Level) =====
+        
         builder.Entity<UserProgress>(entity =>
         {
+            entity.HasKey(up => up.Id);
+
             entity.HasOne(up => up.User)
-                .WithMany()
-                .HasForeignKey(up => up.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
+                  .WithMany()
+                  .HasForeignKey(up => up.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
 
+            
             entity.HasOne(up => up.Subject)
-                .WithMany(s => s.UserProgresses)
-                .HasForeignKey(up => up.SubjectId)
-                .OnDelete(DeleteBehavior.Restrict);
+                  .WithMany(s => s.UserProgresses)
+                  .HasForeignKey(up => up.SubjectId)
+                  .OnDelete(DeleteBehavior.Restrict); 
 
-            // 🔧 change: NO ACTION to avoid double path Topic->(direct) and Topic->Level->UserProgress
             entity.HasOne(up => up.Topic)
-                .WithMany()
-                .HasForeignKey(up => up.TopicId)
-                .OnDelete(DeleteBehavior.NoAction);
+                  .WithMany(t => t.UserProgresses)
+                  .HasForeignKey(up => up.TopicId)
+                  .OnDelete(DeleteBehavior.NoAction); 
 
+           
             entity.HasOne(up => up.Level)
-                .WithMany()
-                .HasForeignKey(up => up.LevelId)
-                .OnDelete(DeleteBehavior.SetNull);
+                  .WithMany(l => l.UserProgress)
+                  .HasForeignKey(up => up.LevelId)
+                  .OnDelete(DeleteBehavior.SetNull);
 
-            entity.HasIndex(up => new { up.UserId, up.SubjectId, up.TopicId, up.LevelId });
+            
+            entity.HasIndex(up => new { up.UserId, up.LevelId })
+                  .IsUnique()
+                  .HasFilter("[LevelId] IS NOT NULL");
         });
 
         // ===== Unlock rules (between levels) =====

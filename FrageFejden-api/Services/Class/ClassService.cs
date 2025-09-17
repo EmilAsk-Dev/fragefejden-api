@@ -26,6 +26,26 @@ public sealed class ClassService : IClassService
             .Include(c => c.Memberships).ThenInclude(m => m.User)
             .FirstOrDefaultAsync(c => c.Id == id, ct);
 
+    public async Task<IEnumerable<VisibleMemberDto>> GetVisibleMembersAsync(Guid classId, Guid callerId, CancellationToken ct)
+    {
+        
+        var isMember = await _db.ClassMemberships
+            .AnyAsync(m => m.ClassId == classId && m.UserId == callerId, ct);
+
+        if (!isMember)
+            throw new UnauthorizedAccessException();
+
+        // Return trimmed info only
+        return await _db.ClassMemberships
+            .Where(m => m.ClassId == classId)
+            .Select(m => new VisibleMemberDto(
+                m.UserId,
+                m.User.FullName,
+                m.User.AvatarUrl
+            ))
+            .ToListAsync(ct);
+    }
+
     public async Task<IReadOnlyList<MyClassDto>> GetMyClassesAsync(Guid userId, CancellationToken ct)
     {
         return await _db.ClassMemberships
@@ -63,7 +83,7 @@ public sealed class ClassService : IClassService
     {
         var cls = new Class
         {
-            // Id is Guid (use DB default or set here: Id = Guid.NewGuid())
+        
             Name = req.Name.Trim(),
             GradeLabel = string.IsNullOrWhiteSpace(req.GradeLabel) ? null : req.GradeLabel.Trim(),
             CreatedAt = DateTime.UtcNow,
@@ -224,14 +244,14 @@ public sealed class ClassService : IClassService
 
     public async Task<List<ScoreDto>> GetScoresForClassAsync(Guid userId, Guid classId, CancellationToken ct)
     {
-        // Ensure the requesting user is a member of the class
+       
         var isMember = await _db.ClassMemberships
             .AsNoTracking()
             .AnyAsync(m => m.UserId == userId && m.ClassId == classId, ct);
 
-        if (!isMember) return new List<ScoreDto>(); // or throw/Forbid at controller
+        if (!isMember) return new List<ScoreDto>();
 
-        // Join memberships to users and project to ScoreDto
+
         var result = await _db.ClassMemberships
             .AsNoTracking()
             .Where(m => m.ClassId == classId)

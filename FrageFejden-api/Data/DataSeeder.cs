@@ -1,13 +1,13 @@
-﻿using FrageFejden.Entities;
-using FrageFejden.Entities.Enums;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using FrageFejden.Entities;
+using FrageFejden.Entities.Enums;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace FrageFejden.Data
 {
@@ -17,14 +17,33 @@ namespace FrageFejden.Data
         private readonly UserManager<AppUser> _userManager;
         private readonly RoleManager<IdentityRole<Guid>> _roleManager;
 
-        private static readonly Guid QuizMathId = Guid.Parse("aaaa1111-aaaa-1111-aaaa-111111111111");
-        private static readonly Guid QuizScienceId = Guid.Parse("aaaa2222-aaaa-2222-aaaa-222222222222");
-        private static readonly Guid QuizAlgebraL1Id = Guid.Parse("aaaa3333-aaaa-3333-aaaa-333333333333"); 
+        // ── Fasta ID:n för klasser ────────────────────────────────────────────────────────
+        private static readonly Guid Class8A = Guid.Parse("11111111-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+        private static readonly Guid Class9B = Guid.Parse("22222222-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+        private static readonly Guid Class9C = Guid.Parse("33333333-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+        private static readonly Guid Class10D = Guid.Parse("44444444-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 
-        private static readonly Guid OptH2OId = Guid.Parse("10000000-0000-0000-0000-000000000001");
-        private static readonly Guid OptTrueId = Guid.Parse("10000000-0000-0000-0000-000000000002");
+        // ── Fasta ID:n för ämnen (globala, skapas separat – inte i Class-grafen) ─────────
+        private static readonly Guid SubjectMath = Guid.Parse("aaaaaaaa-1111-1111-1111-aaaaaaaaaaaa");
+        private static readonly Guid SubjectScience = Guid.Parse("aaaaaaaa-2222-2222-2222-aaaaaaaaaaaa");
+        private static readonly Guid SubjectHistory = Guid.Parse("aaaaaaaa-3333-3333-3333-aaaaaaaaaaaa");
 
-        private static readonly Guid Duel1Id = Guid.Parse("20000000-0000-0000-0000-000000000001");
+        // ── Fasta ID:n för topics ────────────────────────────────────────────────────────
+        private static readonly Guid TopicAlgebra = Guid.Parse("bbbbbbbb-1111-1111-1111-bbbbbbbbbbbb");
+        private static readonly Guid TopicGeometry = Guid.Parse("bbbbbbbb-2222-2222-2222-bbbbbbbbbbbb");
+        private static readonly Guid TopicPhysics = Guid.Parse("bbbbbbbb-3333-3333-3333-bbbbbbbbbbbb");
+        private static readonly Guid TopicBiology = Guid.Parse("bbbbbbbb-4444-4444-4444-bbbbbbbbbbbb");
+        private static readonly Guid TopicWW2 = Guid.Parse("bbbbbbbb-5555-5555-5555-bbbbbbbbbbbb");
+        private static readonly Guid TopicAncients = Guid.Parse("bbbbbbbb-6666-6666-6666-bbbbbbbbbbbb");
+
+        // ── In-memory kartor för att länka ihop allt efter hand ──────────────────────────
+        private readonly Dictionary<Guid, List<Level>> _levelsByTopic = new();                 // TopicId -> Levels
+        private readonly Dictionary<(Guid topicId, int level), Guid> _quizByLevel = new();     // (TopicId, LevelNumber) -> QuizId
+        private readonly Dictionary<(Guid topicId, int level), List<Guid>> _questionIdsByLevel = new(); // (TopicId, LevelNumber) -> QuestionIds
+
+        private readonly List<Question> _questions = new();
+        private readonly List<QuestionOption> _options = new();
+        private readonly List<Quiz> _quizzes = new();
 
         public DatabaseSeeder(AppDbContext context, UserManager<AppUser> userManager, RoleManager<IdentityRole<Guid>> roleManager)
         {
@@ -37,117 +56,90 @@ namespace FrageFejden.Data
         {
             await using var tx = await _context.Database.BeginTransactionAsync(ct);
 
+            // 1) Användare och roller
             await SeedIfEmpty<AppUser>(SeedUsersAsync, ct);
 
+            // 2) Klasser (OBS: inga Subjects här – de skapas globalt i nästa steg)
             await SeedIfEmpty<Class>(SeedClassesAsync, ct);
 
-            
+            // 3) Globala Subjects (Med fasta ID:n; ingen dubblett, ingen tracking-konflikt)
+            await EnsureSubjectsAsync();
+            await _context.SaveChangesAsync(ct);
+
+            // 4) Topics som refererar Subjects (FK OK, ämnen finns)
             await SeedIfEmpty<Topic>(SeedTopicsAsync, ct);
 
-            
-            await SeedIfEmpty<Level>(SeedLevelsAsync, ct);
+            // 5) Levels med studietext per topic
+            await SeedIfEmpty<Level>(SeedLevelsWithStudyTextAsync, ct);
 
-            
+            // 6) Medlemskap i klasser
             await SeedIfEmpty<ClassMembership>(SeedClassMembershipsAsync, ct);
 
+            // 7) Frågor + alternativ (per topic/level, riktiga förklaringar)
             await SeedIfEmpty<Question>(SeedQuestionsAsync, ct);
             await SeedIfEmpty<QuestionOption>(SeedQuestionOptionsAsync, ct);
 
+            // 8) Ett quiz per (topic, level), publicerat till två klasser
             await SeedIfEmpty<Quiz>(SeedQuizzesAsync, ct);
+
+            // 9) Länka frågor till respektive quiz (efter att quiz finns)
             await SeedIfEmpty<QuizQuestion>(SeedQuizQuestionsAsync, ct);
-
-            await SeedIfEmpty<AiTemplate>(SeedAiTemplatesAsync, ct);
-
-            await SeedIfEmpty<Attempt>(SeedAttemptsAsync, ct);
-            await SeedIfEmpty<Response>(SeedResponsesAsync, ct);
-
-            await SeedIfEmpty<Duel>(SeedDuelsAsync, ct);
-            await SeedIfEmpty<DuelParticipant>(SeedDuelParticipantsAsync, ct);
-            await SeedIfEmpty<DuelRound>(SeedDuelRoundsAsync, ct);
-
-            await SeedIfEmpty<UnlockRule>(SeedUnlockRulesAsync, ct);
-            await SeedIfEmpty<UserProgress>(SeedUserProgressAsync, ct);
-
-            await SeedIfEmpty<AiGeneration>(SeedAiGenerationsAsync, ct);
 
             await tx.CommitAsync(ct);
         }
 
-        private async Task SeedIfEmpty<TEntity>(Func<Task> seedFunc, CancellationToken ct = default)
-            where TEntity : class
+        private async Task SeedIfEmpty<TEntity>(Func<Task> seedFunc, CancellationToken ct = default) where TEntity : class
         {
-            if (await _context.Set<TEntity>().AnyAsync(ct))
-                return;
-
+            if (await _context.Set<TEntity>().AnyAsync(ct)) return;
             await seedFunc();
             await _context.SaveChangesAsync(ct);
         }
 
-        // ===== Users & Roles =====
+        // ─────────────────────────────── USERS & ROLES ────────────────────────────────────
         private async Task SeedUsersAsync()
         {
-            foreach (var rn in new[] { "Admin", "Lärare", "Student" })
+            foreach (var rn in new[] { "admin", "teacher", "student" })
                 if (!await _roleManager.RoleExistsAsync(rn))
                     await _roleManager.CreateAsync(new IdentityRole<Guid>(rn));
 
             var users = new[]
             {
-                new AppUser
-                {
-                    Id = Guid.Parse("11111111-1111-1111-1111-111111111111"),
-                    UserName = "john.teacher@school.edu",
-                    Email = "john.teacher@school.edu",
-                    EmailConfirmed = true,
-                    FullName = "John Smith",
-                    Role = Role.teacher,
-                    CreatedAt = DateTime.UtcNow.AddMonths(-6),
-                    experiencePoints = 2500
-                },
-                new AppUser
-                {
-                    Id = Guid.Parse("22222222-2222-2222-2222-222222222222"),
-                    UserName = "mary.student@school.edu",
-                    Email = "mary.student@school.edu",
-                    EmailConfirmed = true,
-                    FullName = "Mary Johnson",
-                    Role = Role.student,
-                    CreatedAt = DateTime.UtcNow.AddMonths(-3),
-                    experiencePoints = 1200
-                },
-                new AppUser
-                {
-                    Id = Guid.Parse("33333333-3333-3333-3333-333333333333"),
-                    UserName = "bob.student@school.edu",
-                    Email = "bob.student@school.edu",
-                    EmailConfirmed = true,
-                    FullName = "Bob Wilson",
-                    Role = Role.student,
-                    CreatedAt = DateTime.UtcNow.AddMonths(-2),
-                    experiencePoints = 800
-                },
-                new AppUser
-                {
-                    Id = Guid.Parse("44444444-4444-4444-4444-444444444444"),
-                    UserName = "admin@school.edu",
-                    Email = "admin@school.edu",
-                    EmailConfirmed = true,
-                    FullName = "Admin User",
-                    Role = Role.admin,
-                    CreatedAt = DateTime.UtcNow.AddYears(-1),
-                    experiencePoints = 5000
-                }
+                // Lärare (3 st)
+                NewUser("tina.teacher@school.edu",  "Tina Larsson",   Role.teacher, "55555555-1111-1111-1111-555555555551"),
+                NewUser("olof.teacher@school.edu",  "Olof Berg",      Role.teacher, "55555555-2222-2222-2222-555555555552"),
+                NewUser("maria.teacher@school.edu", "Maria Sund",     Role.teacher, "55555555-3333-3333-3333-555555555553"),
+
+                // Admin
+                NewUser("admin@school.edu",         "Admin Användare", Role.admin,   "99999999-9999-9999-9999-999999999999"),
+
+                // Elever (12 st – minst 3 i varje klass)
+                NewUser("eva.8a@school.edu",   "Eva Karlsson",      Role.student, "66666666-0001-0001-0001-666666666661"),
+                NewUser("ahmed.8a@school.edu", "Ahmed Ali",         Role.student, "66666666-0002-0002-0002-666666666662"),
+                NewUser("lisa.8a@school.edu",  "Lisa Norén",        Role.student, "66666666-0003-0003-0003-666666666663"),
+
+                NewUser("jon.9b@school.edu",   "Jon Persson",       Role.student, "66666666-1001-1001-1001-666666666671"),
+                NewUser("mia.9b@school.edu",   "Mia Östberg",       Role.student, "66666666-1002-1002-1002-666666666672"),
+                NewUser("leo.9b@school.edu",   "Leo Olsson",        Role.student, "66666666-1003-1003-1003-666666666673"),
+
+                NewUser("nina.9c@school.edu",  "Nina Holm",         Role.student, "66666666-2001-2001-2001-666666666681"),
+                NewUser("vik.9c@school.edu",   "Viktor Pettersson", Role.student, "66666666-2002-2002-2002-666666666682"),
+                NewUser("sam.9c@school.edu",   "Sam Tran",          Role.student, "66666666-2003-2003-2003-666666666683"),
+
+                NewUser("edvin.10d@school.edu","Edvin Åkesson",     Role.student, "66666666-3001-3001-3001-666666666691"),
+                NewUser("sofia.10d@school.edu","Sofia Bergström",   Role.student, "66666666-3002-3002-3002-666666666692"),
+                NewUser("maya.10d@school.edu", "Maya Widell",       Role.student, "66666666-3003-3003-3003-666666666693"),
             };
 
-            foreach (var user in users)
+            foreach (var u in users)
             {
-                var existing = await _userManager.FindByIdAsync(user.Id.ToString());
+                var existing = await _userManager.FindByIdAsync(u.Id.ToString());
                 if (existing is null)
                 {
-                    var res = await _userManager.CreateAsync(user, "Password123!");
+                    var res = await _userManager.CreateAsync(u, "Password123!");
                     if (!res.Succeeded)
-                        throw new InvalidOperationException($"Failed to create user {user.Email}: " +
+                        throw new InvalidOperationException($"Kunde inte skapa användare {u.Email}: " +
                             string.Join(", ", res.Errors.Select(e => e.Description)));
-                    existing = user;
+                    existing = u;
                 }
 
                 var roleName = MapEnumToIdentityRoleName(existing.Role);
@@ -155,822 +147,474 @@ namespace FrageFejden.Data
                 {
                     var addRoleRes = await _userManager.AddToRoleAsync(existing, roleName);
                     if (!addRoleRes.Succeeded)
-                        throw new InvalidOperationException($"Failed to add role {roleName} to {existing.Email}: " +
+                        throw new InvalidOperationException($"Kunde inte lägga till roll {roleName} till {existing.Email}: " +
                             string.Join(", ", addRoleRes.Errors.Select(e => e.Description)));
                 }
+            }
+
+            static AppUser NewUser(string email, string name, Role role, string id)
+            {
+                return new AppUser
+                {
+                    Id = Guid.Parse(id),
+                    UserName = email,
+                    Email = email,
+                    EmailConfirmed = true,
+                    FullName = name,
+                    Role = role,
+                    CreatedAt = DateTime.UtcNow.AddDays(-30),
+                    experiencePoints = role == Role.student ? 300 : (role == Role.teacher ? 1200 : 5000)
+                };
             }
         }
 
         private static string MapEnumToIdentityRoleName(Role r) => r switch
         {
-            Role.admin => "Admin",
-            Role.teacher => "Lärare",
-            Role.student => "Student",
-            _ => "Student"
+            Role.admin => "admin",
+            Role.teacher => "teacher",
+            Role.student => "student",
+            _ => "student"
         };
 
-        // ===== Classes (with Subjects attached to Class) =====
+        // ───────────────────────────────── CLASSES ────────────────────────────────────────
+        // Viktigt: inga Subjects här (för att undvika dubblering/track-konflikter). 
         private async Task SeedClassesAsync()
         {
-            var teacherId = Guid.Parse("11111111-1111-1111-1111-111111111111"); 
+            var teacherTina = Guid.Parse("55555555-1111-1111-1111-555555555551");
+            var teacherOlof = Guid.Parse("55555555-2222-2222-2222-555555555552");
+            var teacherMaria = Guid.Parse("55555555-3333-3333-3333-555555555553");
 
-            var class9B = new Class
-            {
-                Id = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd"),
-                Name = "9B",
-                GradeLabel = "Grade 9",
-                JoinCode = "MATH101",
-                CreatedById = teacherId,
-                CreatedAt = DateTime.UtcNow.AddMonths(-4),
-                Subjects =
-                {
-                    new Subject
-                    {
-                        Id = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
-                        Name = "Mathematics",
-                        Description = "Comprehensive mathematics curriculum",
-                        CreatedById = teacherId,
-                        CreatedAt = DateTime.UtcNow.AddMonths(-5),
-                        IconUrl = "icons/math-transparent.png"
-                    },
-                    new Subject
-                    {
-                        Id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                        Name = "Science",
-                        Description = "General science topics",
-                        CreatedById = teacherId,
-                        CreatedAt = DateTime.UtcNow.AddMonths(-4),
-                        IconUrl = "icons/math-transparent.png"
-                    },
-                    new Subject
-                    {
-                        Id = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc"),
-                        Name = "History",
-                        Description = "World and local history",
-                        CreatedById = Guid.Parse("44444444-4444-4444-4444-444444444444"),
-                        CreatedAt = DateTime.UtcNow.AddMonths(-3),
-                        IconUrl = "icons/students-icon.png"
-                    }
-                }
-            };
-
-            var class9C = new Class
-            {
-                Id = Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"),
-                Name = "9C",
-                GradeLabel = "Grade 8",
-                JoinCode = "SCI8EX",
-                CreatedById = teacherId,
-                CreatedAt = DateTime.UtcNow.AddMonths(-3),
-                Subjects =
-                {
-                    new Subject
-                    {
-                        Id = Guid.NewGuid(),
-                        Name = "Science",
-                        Description = "Science for Grade 8",
-                        CreatedById = teacherId,
-                        CreatedAt = DateTime.UtcNow.AddMonths(-3),
-                        IconUrl = "icons/score-icon"
-                    }
-                }
-            };
-
-            _context.Set<Class>().AddRange(class9B, class9C);
+            _context.Set<Class>().AddRange(
+                new Class { Id = Class8A, Name = "8A", GradeLabel = "Åk 8", JoinCode = "JOIN8A", CreatedById = teacherTina, CreatedAt = DateTime.UtcNow.AddMonths(-2) },
+                new Class { Id = Class9B, Name = "9B", GradeLabel = "Åk 9", JoinCode = "JOIN9B", CreatedById = teacherOlof, CreatedAt = DateTime.UtcNow.AddMonths(-2) },
+                new Class { Id = Class9C, Name = "9C", GradeLabel = "Åk 9", JoinCode = "JOIN9C", CreatedById = teacherOlof, CreatedAt = DateTime.UtcNow.AddMonths(-2) },
+                new Class { Id = Class10D, Name = "10D", GradeLabel = "Åk 10", JoinCode = "JOIN10D", CreatedById = teacherMaria, CreatedAt = DateTime.UtcNow.AddMonths(-2) }
+            );
         }
 
-        // ===== Topics (under Subjects) =====
+        // ─────────────────────────────── SUBJECTS (globalt) ───────────────────────────────
+        // Skapas alltid/”upsertas” så FK till Topics är säkra, utan dubbletter/konflikter.
+        private async Task EnsureSubjectsAsync()
+        {
+            var now = DateTime.UtcNow;
+
+            async Task EnsureOne(Guid id, string name, string desc, string icon, Guid createdBy)
+            {
+                var existing = await _context.Set<Subject>().FindAsync(id);
+                if (existing == null)
+                {
+                    _context.Set<Subject>().Add(new Subject
+                    {
+                        Id = id,
+                        Name = name,
+                        Description = desc,
+                        IconUrl = icon,
+                        CreatedById = createdBy,
+                        CreatedAt = now
+                    });
+                }
+                else
+                {
+                    // valfritt: uppdatera metadata
+                    existing.Name = name;
+                    existing.Description = desc;
+                    existing.IconUrl = icon;
+                }
+            }
+
+            var tina = Guid.Parse("55555555-1111-1111-1111-555555555551");
+            var olof = Guid.Parse("55555555-2222-2222-2222-555555555552");
+            var maria = Guid.Parse("55555555-3333-3333-3333-555555555553");
+
+            await EnsureOne(SubjectMath, "Matematik", "Algebra och geometri", "icons/math.png", tina);
+            await EnsureOne(SubjectScience, "NO", "Fysik och biologi", "icons/science.png", olof);
+            await EnsureOne(SubjectHistory, "Historia", "Världshistoria", "icons/history.png", maria);
+        }
+
+        // ─────────────────────────────────── TOPICS ───────────────────────────────────────
         private async Task SeedTopicsAsync()
         {
-            var topics = new[]
-            {
-                new Topic
-                {
-                    Id = Guid.NewGuid(),
-                    SubjectId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"), // Math
-                    Name = "Algebra",
-                    Description = "Basic algebraic concepts and equations",
-                    SortOrder = 0
-                },
-                new Topic
-                {
-                    Id = Guid.NewGuid(),
-                    SubjectId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
-                    Name = "Geometry",
-                    Description = "Shapes, angles, and spatial relationships",
-                    SortOrder = 1
-                },
-                new Topic
-                {
-                    Id = Guid.NewGuid(),
-                    SubjectId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"), // Science
-                    Name = "Physics",
-                    Description = "Laws of motion and energy",
-                    SortOrder = 0
-                },
-                new Topic
-                {
-                    Id = Guid.NewGuid(),
-                    SubjectId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                    Name = "Biology",
-                    Description = "Living organisms and life processes",
-                    SortOrder = 1
-                }
-            };
+            _context.Set<Topic>().AddRange(
+                new Topic { Id = TopicAlgebra, SubjectId = SubjectMath, Name = "Algebra", Description = "Uttryck, ekvationer, faktorisering", SortOrder = 0 },
+                new Topic { Id = TopicGeometry, SubjectId = SubjectMath, Name = "Geometri", Description = "Former, vinklar, area och volym", SortOrder = 1 },
 
-            _context.Set<Topic>().AddRange(topics);
+                new Topic { Id = TopicPhysics, SubjectId = SubjectScience, Name = "Fysik", Description = "Krafter, rörelse, energi", SortOrder = 0 },
+                new Topic { Id = TopicBiology, SubjectId = SubjectScience, Name = "Biologi", Description = "Cellen, genetik, system", SortOrder = 1 },
+
+                new Topic { Id = TopicWW2, SubjectId = SubjectHistory, Name = "Andra världskriget", Description = "Europa, Stillahavet, Förintelsen, 1939–1945", SortOrder = 0 },
+                new Topic { Id = TopicAncients, SubjectId = SubjectHistory, Name = "Antikens civilisationer", Description = "Mesopotamien, Egypten, Grekland, Rom", SortOrder = 1 }
+            );
         }
 
-        private async Task SeedLevelsAsync()
+        // ───────────────────────────── LEVELS + STUDIETEXTER ─────────────────────────────
+        private async Task SeedLevelsWithStudyTextAsync()
         {
-            // Fetch topics by name so we can give each a different max level & XP curve
-            var topics = await _context.Set<Topic>()
-                .Select(t => new { t.Id, t.Name, t.SubjectId })
-                .ToListAsync();
-
-            // Per-topic plan: (maxLevels, MinXpUnlock function per levelNumber)
-            // Tip: tweak the XP curves below to shape how many levels Mary sees as unlocked
-            var plan = new Dictionary<string, (int max, Func<int, int> xp)>
+            foreach (var (topicId, topicName) in new[]
             {
-                // Algebra (Math): 10 levels, gradual steps
-                ["Algebra"] = (10, i => (i - 1) * 150),                 // 0,150,300,...,1350
-
-                // Geometry (Math): 5 levels, non-linear steps (harder gates)
-                ["Geometry"] = (5, i => i switch
-                {
-                    1 => 0,
-                    2 => 300,
-                    3 => 700,
-                    4 => 1100,
-                    5 => 1500,
-                    _ => (i - 1) * 300
-                }),
-
-                // Physics (Science): 3 levels, moderate steps
-                ["Physics"] = (3, i => i switch
-                {
-                    1 => 0,
-                    2 => 400,
-                    3 => 900,
-                    _ => (i - 1) * 400
-                }),
-
-                // Biology (Science): 5 levels, steady steps
-                ["Biology"] = (5, i => (i - 1) * 200)
-            };
-
-            var levels = new List<Level>();
-
-            foreach (var t in topics)
+                (TopicAlgebra,  "Algebra"),
+                (TopicGeometry, "Geometri"),
+                (TopicPhysics,  "Fysik"),
+                (TopicBiology,  "Biologi"),
+                (TopicWW2,      "Andra världskriget"),
+                (TopicAncients, "Antikens civilisationer")
+            })
             {
-                var (max, xpFn) = plan.TryGetValue(t.Name, out var p)
-                    ? p
-                    : (5, new Func<int, int>(i => (i - 1) * 200)); // default fallback if new topics appear
-
-                for (int i = 1; i <= max; i++)
+                var levels = new List<Level>();
+                for (int i = 1; i <= 3; i++)
                 {
                     levels.Add(new Level
                     {
                         Id = Guid.NewGuid(),
-                        TopicId = t.Id,
+                        TopicId = topicId,
                         LevelNumber = i,
-                        Title = $"{t.Name} – Nivå {i}",
-                        MinXpUnlock = xpFn(i),
-                        StudyText = BuildStudyText(t.Name, i)
+                        Title = $"{topicName} – Nivå {i}",
+                        MinXpUnlock = (i - 1) * 200,
+                        StudyText = BuildStudyText(topicName, i)
                     });
                 }
+                _levelsByTopic[topicId] = levels;
+                _context.Set<Level>().AddRange(levels);
             }
 
-            _context.Set<Level>().AddRange(levels);
+            static string BuildStudyText(string topic, int level) => topic switch
+            {
+                "Algebra" => level switch
+                {
+                    1 => "Nivå 1: termer, koefficienter, enkla ekvationer (x + 3 = 7).",
+                    2 => "Nivå 2: fördelningslagen, förenkling, ekvationer med parenteser (2(x+3)=14).",
+                    3 => "Nivå 3: faktorisering, potenser, enkla ekvationssystem.",
+                    _ => ""
+                },
+                "Geometri" => level switch
+                {
+                    1 => "Nivå 1: triangeltyper, vinkelsumma 180°, area rektangel (b·h).",
+                    2 => "Nivå 2: Pythagoras, cirkelomkrets (2πr), area triangel (b·h/2).",
+                    3 => "Nivå 3: likformighet, vinklar vid parallella linjer, volym kub.",
+                    _ => ""
+                },
+                "Fysik" => level switch
+                {
+                    1 => "Nivå 1: tröghetslagen, hastighet v=s/t, energiformer.",
+                    2 => "Nivå 2: acceleration, F=ma, potentiell energi Ep=mgh.",
+                    3 => "Nivå 3: rörelsemängd p=mv, arbete W=F·s, effekt P=W/t.",
+                    _ => ""
+                },
+                "Biologi" => level switch
+                {
+                    1 => "Nivå 1: cellens delar, fotosyntesen (6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂).",
+                    2 => "Nivå 2: DNA, mitos, cellandning (glukos + O₂ → CO₂ + H₂O + energi).",
+                    3 => "Nivå 3: nervsystem, immunsystem, enzymer.",
+                    _ => ""
+                },
+                "Andra världskriget" => level switch
+                {
+                    1 => "Nivå 1: krigsstart 1939, axelmakter/allierade, blitzkrieg.",
+                    2 => "Nivå 2: Barbarossa, D-dagen, Förintelsen.",
+                    3 => "Nivå 3: Stillahavskriget, Hiroshima/Nagasaki, FN 1945.",
+                    _ => ""
+                },
+                "Antikens civilisationer" => level switch
+                {
+                    1 => "Nivå 1: Mesopotamiens floder, hieroglyfer, grekiska stadsstater.",
+                    2 => "Nivå 2: Romerska republiken/kejsardömet, Hammurabis lagar, pyramider.",
+                    3 => "Nivå 3: Alexander den store, romerska vägar, atensk demokrati.",
+                    _ => ""
+                },
+                _ => ""
+            };
         }
 
-        private static string BuildStudyText(string topicName, int level)
-        {
-                        return $@"
-            ## {topicName} – Nivå {level}
-
-            Det här är studiematerialet för **{topicName}**, nivå **{level}**.
-
-            **Mål för nivån**
-            - Centrala begrepp för nivå {level} inom {topicName}.
-            - Miniförklaringar + korta exempel.
-            - Förberedelse inför quizet.
-
-            **Lässtrategi**
-            1. Skumma igenom rubriker.
-            2. Läs exemplen noggrant.
-            3. Testa dig själv innan quizet.
-
-            **Exempel**
-            - [{topicName}] En enkel uppgift på nivå {level} med lösningssteg.
-
-            > Markera som läst när du är klar. 
-            ";
-        }
-
-
-
-
-
-        // ===== Memberships (John is teacher for Mary's class 9B) =====
+        // ─────────────────────────────── CLASS MEMBERSHIPS ────────────────────────────────
         private async Task SeedClassMembershipsAsync()
         {
-            var johnId = Guid.Parse("11111111-1111-1111-1111-111111111111");
-            var maryId = Guid.Parse("22222222-2222-2222-2222-222222222222");
-            var bobId = Guid.Parse("33333333-3333-3333-3333-333333333333");
+            var tina = Guid.Parse("55555555-1111-1111-1111-555555555551");
+            var olof = Guid.Parse("55555555-2222-2222-2222-555555555552");
+            var maria = Guid.Parse("55555555-3333-3333-3333-555555555553");
 
-            var m = new[]
+            var m = new List<ClassMembership>
             {
-                new ClassMembership
-                {
-                    Id = Guid.NewGuid(),
-                    ClassId = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd"), // 9B
-                    UserId = maryId,
-                    RoleInClass = Role.student,
-                    EnrolledAt = DateTime.UtcNow.AddMonths(-3)
-                },
-                new ClassMembership
-                {
-                    Id = Guid.NewGuid(),
-                    ClassId = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd"), // 9B
-                    UserId = bobId,
-                    RoleInClass = Role.student,
-                    EnrolledAt = DateTime.UtcNow.AddMonths(-2)
-                },
-                // John as the teacher of Mary's class (9B)
-                new ClassMembership
-                {
-                    Id = Guid.NewGuid(),
-                    ClassId = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd"), // 9B
-                    UserId = johnId,
-                    RoleInClass = Role.teacher,
-                    EnrolledAt = DateTime.UtcNow.AddMonths(-4)
-                },
-                
-                
+                // Lärare
+                CM(Class8A,  tina,  Role.teacher),
+                CM(Class9B,  olof,  Role.teacher),
+                CM(Class9C,  olof,  Role.teacher),
+                CM(Class10D, maria, Role.teacher),
+
+                // Elever: minst 3 per klass
+                CM(Class8A,  Guid.Parse("66666666-0001-0001-0001-666666666661")),
+                CM(Class8A,  Guid.Parse("66666666-0002-0002-0002-666666666662")),
+                CM(Class8A,  Guid.Parse("66666666-0003-0003-0003-666666666663")),
+
+                CM(Class9B,  Guid.Parse("66666666-1001-1001-1001-666666666671")),
+                CM(Class9B,  Guid.Parse("66666666-1002-1002-1002-666666666672")),
+                CM(Class9B,  Guid.Parse("66666666-1003-1003-1003-666666666673")),
+
+                CM(Class9C,  Guid.Parse("66666666-2001-2001-2001-666666666681")),
+                CM(Class9C,  Guid.Parse("66666666-2002-2002-0002-666666666682".Replace("0002","2002"))), // safe literal
+                CM(Class9C,  Guid.Parse("66666666-2003-2003-2003-666666666683")),
+
+                CM(Class10D, Guid.Parse("66666666-3001-3001-3001-666666666691")),
+                CM(Class10D, Guid.Parse("66666666-3002-3002-3002-666666666692")),
+                CM(Class10D, Guid.Parse("66666666-3003-3003-3003-666666666693")),
             };
 
             _context.Set<ClassMembership>().AddRange(m);
+
+            static ClassMembership CM(Guid classId, Guid userId, Role roleInClass = Role.student)
+                => new ClassMembership { Id = Guid.NewGuid(), ClassId = classId, UserId = userId, RoleInClass = roleInClass, EnrolledAt = DateTime.UtcNow.AddDays(-20) };
         }
 
-        // ===== Questions =====
+        // ───────────────────────────── QUESTIONS (riktiga) ────────────────────────────────
         private async Task SeedQuestionsAsync()
         {
-            var questions = new[]
+            // Hjälpare som registrerar frågor + kopplar nivå (i minneskartan)
+            void Q(Guid subjectId, Guid topicId, int level, string stem, string explanation, params (string text, bool correct)[] options)
             {
-                new Question
+                var q = new Question
                 {
-                    Id = Guid.Parse("ffff1111-ffff-1111-ffff-111111111111"),
-                    SubjectId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+                    Id = Guid.NewGuid(),
+                    SubjectId = subjectId,
                     Type = QuestionType.multiple_choice,
-                    Difficulty = Difficulty.easy,
-                    Stem = "What is 2 + 2?",
-                    Explanation = "Basic addition of two numbers",
+                    Difficulty = level == 1 ? Difficulty.easy : (level == 2 ? Difficulty.medium : Difficulty.hard),
+                    Stem = stem,
+                    Explanation = explanation,
                     SourceAi = false,
-                    CreatedById = Guid.Parse("11111111-1111-1111-1111-111111111111"),
-                    ApprovedById = Guid.Parse("44444444-4444-4444-4444-444444444444"),
-                    CreatedAt = DateTime.UtcNow.AddMonths(-2)
-                },
-                new Question
-                {
-                    Id = Guid.Parse("ffff2222-ffff-2222-ffff-222222222222"),
-                    SubjectId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
-                    Type = QuestionType.multiple_choice,
-                    Difficulty = Difficulty.medium,
-                    Stem = "Solve for x: 2x + 5 = 11",
-                    Explanation = "Subtract 5 from both sides, then divide by 2",
-                    SourceAi = false,
-                    CreatedById = Guid.Parse("11111111-1111-1111-1111-111111111111"),
-                    CreatedAt = DateTime.UtcNow.AddMonths(-1)
-                },
-                new Question
-                {
-                    Id = Guid.Parse("ffff3333-ffff-3333-ffff-333333333333"),
-                    SubjectId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                    Type = QuestionType.multiple_choice,
-                    Difficulty = Difficulty.easy,
-                    Stem = "What is the chemical symbol for water?",
-                    Explanation = "Water consists of two hydrogen atoms and one oxygen atom",
-                    SourceAi = false,
-                    CreatedById = Guid.Parse("11111111-1111-1111-1111-111111111111"),
-                    CreatedAt = DateTime.UtcNow.AddDays(-3)
-                },
-                new Question
-                {
-                    Id = Guid.Parse("ffff4444-ffff-4444-ffff-444444444444"),
-                    SubjectId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                    Type = QuestionType.true_false,
-                    Difficulty = Difficulty.medium,
-                    Stem = "The Earth orbits around the Sun.",
-                    Explanation = "The Earth takes approximately 365.25 days to orbit the Sun",
-                    SourceAi = true,
-                    CreatedById = Guid.Parse("44444444-4444-4444-4444-444444444444"),
+                    CreatedById = Guid.Parse("55555555-1111-1111-1111-555555555551"),
                     CreatedAt = DateTime.UtcNow.AddDays(-2)
-                }
-            };
+                };
+                _questions.Add(q);
 
-            _context.Set<Question>().AddRange(questions);
+                int sort = 1;
+                foreach (var (text, correct) in options)
+                {
+                    _options.Add(new QuestionOption
+                    {
+                        Id = Guid.NewGuid(),
+                        QuestionId = q.Id,
+                        OptionText = text,
+                        IsCorrect = correct,
+                        SortOrder = sort++
+                    });
+                }
+
+                if (!_questionIdsByLevel.TryGetValue((topicId, level), out var list))
+                {
+                    list = new List<Guid>();
+                    _questionIdsByLevel[(topicId, level)] = list;
+                }
+                list.Add(q.Id);
+            }
+
+            // --- Algebra ---
+            Q(SubjectMath, TopicAlgebra, 1, "Vilken är koefficienten i uttrycket 5x + 3?", "Koefficienten är talet som multiplicerar variabeln.",
+                ("5", true), ("x", false), ("3", false), ("8", false));
+            Q(SubjectMath, TopicAlgebra, 1, "Lös ekvationen x + 3 = 7.", "Subtrahera 3 från båda sidor: x = 4.",
+                ("4", true), ("3", false), ("7", false), ("-4", false));
+            Q(SubjectMath, TopicAlgebra, 1, "Vad betyder uttrycket 2x?", "Det är två gånger variabeln x.",
+                ("x + x", true), ("x - x", false), ("x/2", false), ("2 + x", false));
+
+            Q(SubjectMath, TopicAlgebra, 2, "Förenkla 2(x + 3).", "Fördelningslagen: 2x + 6.",
+                ("2x + 6", true), ("x + 6", false), ("2x + 3", false), ("x + 9", false));
+            Q(SubjectMath, TopicAlgebra, 2, "Lös 2x - 4 = 10.", "Addera 4 och dela med 2: x = 7.",
+                ("7", true), ("3", false), ("-7", false), ("14", false));
+            Q(SubjectMath, TopicAlgebra, 2, "Förenkla 3x + 2x - x.", "3x + 2x - x = 4x.",
+                ("4x", true), ("6x", false), ("5x", false), ("2x", false));
+
+            Q(SubjectMath, TopicAlgebra, 3, "Faktorisera uttrycket x^2 - 9.", "Konjugat: (x-3)(x+3).",
+                ("(x-3)(x+3)", true), ("(x-9)(x+9)", false), ("x(x-9)", false), ("(x-1)(x+9)", false));
+            Q(SubjectMath, TopicAlgebra, 3, "Lös systemet: x + y = 5 och x - y = 1.", "Addera: 2x=6 ⇒ x=3, y=2.",
+                ("x=3, y=2", true), ("x=2, y=3", false), ("x=4, y=1", false), ("x=1, y=4", false));
+            Q(SubjectMath, TopicAlgebra, 3, "Värdet av 2^3 · 2^2 är?", "Exponenter adderas: 2^5 = 32.",
+                ("32", true), ("64", false), ("16", false), ("8", false));
+
+            // --- Geometri ---
+            Q(SubjectMath, TopicGeometry, 1, "Vinkelsumman i en triangel är?", "Alltid 180°.",
+                ("180°", true), ("90°", false), ("270°", false), ("360°", false));
+            Q(SubjectMath, TopicGeometry, 1, "Arean av rektangel med bas 6 och höjd 3?", "A=b·h=18.",
+                ("18", true), ("9", false), ("12", false), ("24", false));
+            Q(SubjectMath, TopicGeometry, 1, "Vilken triangel har en 90° vinkel?", "Rätvinklig triangel.",
+                ("Rätvinklig", true), ("Likbent", false), ("Liksidig", false), ("Trubbvinklig", false));
+
+            Q(SubjectMath, TopicGeometry, 2, "Pythagoras: kateter 3 och 4 ⇒ hypotenusa?", "√(3²+4²)=5.",
+                ("5", true), ("6", false), ("7", false), ("4", false));
+            Q(SubjectMath, TopicGeometry, 2, "Omkrets av cirkel med r=7?", "2πr ≈ 44.",
+                ("≈ 44", true), ("≈ 22", false), ("≈ 14", false), ("≈ 88", false));
+            Q(SubjectMath, TopicGeometry, 2, "Area av triangel b=10, h=4?", "(b·h)/2=20.",
+                ("20", true), ("40", false), ("10", false), ("14", false));
+
+            Q(SubjectMath, TopicGeometry, 3, "Likformiga trianglar har…", "Lika vinklar, proportionella sidor.",
+                ("Lika vinklar och proportionella sidor", true), ("Lika sidor men olika vinklar", false), ("Alltid samma area", false), ("Alltid samma omkrets", false));
+            Q(SubjectMath, TopicGeometry, 3, "Alternatvinklar uppstår när…", "Två parallella linjer skärs av transversal.",
+                ("En transversal skär två parallella linjer", true), ("Två icke-parallella linjer möts", false), ("En triangel ritas", false), ("En cirkel ritas", false));
+            Q(SubjectMath, TopicGeometry, 3, "Volym av kub med sida 4?", "4³=64.",
+                ("64", true), ("16", false), ("32", false), ("48", false));
+
+            // --- Fysik ---
+            Q(SubjectScience, TopicPhysics, 1, "Newtons första lag kallas…", "Tröghetslagen.",
+                ("Tröghetslagen", true), ("Gravitationslagen", false), ("Termodynamikens nollte", false), ("Hookes lag", false));
+            Q(SubjectScience, TopicPhysics, 1, "Hastighet v definieras som…", "Sträcka per tid (v=s/t).",
+                ("Sträcka per tid", true), ("Tid per sträcka", false), ("Kraft per massa", false), ("Energi per tid", false));
+            Q(SubjectScience, TopicPhysics, 1, "Vilken energi har ett föremål högt upp?", "Potentiell energi.",
+                ("Potentiell", true), ("Kinetisk", false), ("Värme", false), ("El", false));
+
+            Q(SubjectScience, TopicPhysics, 2, "Newtons andra lag är…", "F=ma.",
+                ("F=ma", true), ("E=mc²", false), ("p=mv", false), ("V=IR", false));
+            Q(SubjectScience, TopicPhysics, 2, "Potentiell energi uttrycks…", "Ep=mgh.",
+                ("Ep=mgh", true), ("Ep=1/2mv²", false), ("Ep=F·s", false), ("Ep=p·V", false));
+            Q(SubjectScience, TopicPhysics, 2, "Acceleration mäts i…", "m/s².",
+                ("m/s²", true), ("m/s", false), ("N", false), ("kg", false));
+
+            Q(SubjectScience, TopicPhysics, 3, "Rörelsemängd p definieras som…", "p=mv.",
+                ("p=mv", true), ("p=m/a", false), ("p=ma", false), ("p=m+v", false));
+            Q(SubjectScience, TopicPhysics, 3, "Arbete W definieras som…", "W=F·s.",
+                ("W=F·s", true), ("W=P·t", false), ("W=m·g", false), ("W=Q·V", false));
+            Q(SubjectScience, TopicPhysics, 3, "Effekt P är…", "Arbete per tid (P=W/t).",
+                ("P=W/t", true), ("P=F·s", false), ("P=mv", false), ("P=mgh", false));
+
+            // --- Biologi ---
+            Q(SubjectScience, TopicBiology, 1, "Cellkärnan innehåller…", "DNA.",
+                ("DNA", true), ("ATP", false), ("Ribosomer", false), ("Klorofyll", false));
+            Q(SubjectScience, TopicBiology, 1, "Fotosyntesen producerar…", "Glukos och syre.",
+                ("Glukos och syre", true), ("Koldioxid och vatten", false), ("Protein", false), ("Lipider", false));
+            Q(SubjectScience, TopicBiology, 1, "Cellmembranets roll är…", "Reglera transport in/ut.",
+                ("Reglera transport", true), ("Skapa ATP", false), ("Bryta ner gifter", false), ("Lagra DNA", false));
+
+            Q(SubjectScience, TopicBiology, 2, "DNA bär…", "Genetisk information.",
+                ("Genetisk information", true), ("Syre", false), ("Avfall", false), ("Aminosyror", false));
+            Q(SubjectScience, TopicBiology, 2, "Mitos ger…", "Två identiska dotterceller.",
+                ("Två identiska dotterceller", true), ("Fyra könsceller", false), ("En större cell", false), ("Ingen förändring", false));
+            Q(SubjectScience, TopicBiology, 2, "Cellandning frigör…", "Energi ur glukos.",
+                ("Energi ur glukos", true), ("Syre ur vatten", false), ("Glukos ur syre", false), ("DNA ur proteiner", false));
+
+            Q(SubjectScience, TopicBiology, 3, "Nervsystemets grundcell heter…", "Neuron.",
+                ("Neuron", true), ("Hemoglobin", false), ("Myosin", false), ("Makrofag", false));
+            Q(SubjectScience, TopicBiology, 3, "Antikroppar produceras av…", "B-celler.",
+                ("B-celler", true), ("Neuron", false), ("Osteoblaster", false), ("Erytrocyter", false));
+            Q(SubjectScience, TopicBiology, 3, "Enzymer…", "Sänker aktiveringsenergin.",
+                ("Sänker aktiveringsenergi", true), ("Höjer temperaturen", false), ("Ger laddning", false), ("Är alltid kolhydrater", false));
+
+            // --- Andra världskriget ---
+            Q(SubjectHistory, TopicWW2, 1, "Kriget började år…", "1939.",
+                ("1939", true), ("1914", false), ("1941", false), ("1945", false));
+            Q(SubjectHistory, TopicWW2, 1, "Axelmakterna var bl.a.…", "Tyskland, Italien, Japan.",
+                ("Tyskland, Italien, Japan", true), ("USA, UK, Sovjet", false), ("Sverige, Norge, Danmark", false), ("Spanien, Portugal, Schweiz", false));
+            Q(SubjectHistory, TopicWW2, 1, "Blitzkrieg syftar på…", "Snabbt, koncentrerat anfall.",
+                ("Snabbt koncentrerat anfall", true), ("Ubåtskrig", false), ("Artilleribombning", false), ("Luftbro", false));
+
+            Q(SubjectHistory, TopicWW2, 2, "Operation Barbarossa var…", "Tysklands anfall mot Sovjet 1941.",
+                ("Anfallet mot Sovjet 1941", true), ("Invasion av Polen", false), ("D-dagen", false), ("Fredsavtal", false));
+            Q(SubjectHistory, TopicWW2, 2, "D-dagen (Normandie) var…", "Allierad landstigning 1944.",
+                ("Landstigning i Normandie 1944", true), ("Bombning av London", false), ("Japans kapitulation", false), ("Stalingrad", false));
+            Q(SubjectHistory, TopicWW2, 2, "Förintelsen avser…", "Systematisk förföljelse/mord.",
+                ("Systematisk förföljelse/mord", true), ("Militärkupp", false), ("Kärnvapenprogram", false), ("Evakuering", false));
+
+            Q(SubjectHistory, TopicWW2, 3, "Atombomber fälldes över…", "Hiroshima och Nagasaki 1945.",
+                ("Hiroshima & Nagasaki", true), ("Tokyo & Osaka", false), ("Seoul & Pusan", false), ("Peking & Nanjing", false));
+            Q(SubjectHistory, TopicWW2, 3, "FN grundades…", "1945.",
+                ("1945", true), ("1939", false), ("1919", false), ("1950", false));
+            Q(SubjectHistory, TopicWW2, 3, "Kriget i Europa slutade…", "Maj 1945.",
+                ("Maj 1945", true), ("Juni 1944", false), ("Sept 1943", false), ("Aug 1946", false));
+
+            // --- Antiken ---
+            Q(SubjectHistory, TopicAncients, 1, "Mesopotamien låg mellan…", "Eufrat och Tigris.",
+                ("Eufrat & Tigris", true), ("Nilen & Niger", false), ("Donau & Rhen", false), ("Ganges & Brahmaputra", false));
+            Q(SubjectHistory, TopicAncients, 1, "Egyptiskt skriftspråk heter…", "Hieroglyfer.",
+                ("Hieroglyfer", true), ("Kilskrift", false), ("Latin", false), ("Arabiska", false));
+            Q(SubjectHistory, TopicAncients, 1, "Grekisk stadsstat kallas…", "Polis.",
+                ("Polis", true), ("Agora", false), ("Forum", false), ("Akropolis", false));
+
+            Q(SubjectHistory, TopicAncients, 2, "Hammurabis lagar var…", "En tidig skriven lagkodex.",
+                ("Skriven lagkodex", true), ("Skattelag", false), ("Militärhandbok", false), ("Religionsbok", false));
+            Q(SubjectHistory, TopicAncients, 2, "Republiken ersattes av…", "Kejsardömet.",
+                ("Kejsardömet", true), ("Demokrati", false), ("Teokrati", false), ("Feodalism", false));
+            Q(SubjectHistory, TopicAncients, 2, "Pyramidernas syfte var…", "Gravar åt faraoner.",
+                ("Faraoners gravar", true), ("Fästningar", false), ("Tempel", false), ("Lagerhus", false));
+
+            Q(SubjectHistory, TopicAncients, 3, "Alexander den store…", "Spred grekisk kultur (hellenism).",
+                ("Spred hellenismen", true), ("Byggde kinesiska muren", false), ("Uppfann alfabetet", false), ("Grundade Rom", false));
+            Q(SubjectHistory, TopicAncients, 3, "Romerska vägar möjliggjorde…", "Snabb truppförflyttning & handel.",
+                ("Snabb förflyttning & handel", true), ("Irrigation", false), ("Kraftproduktion", false), ("Kanalbyggen", false));
+            Q(SubjectHistory, TopicAncients, 3, "Atensk demokrati byggde på…", "Medborgarnas direkta deltagande.",
+                ("Direkt deltagande", true), ("Absolut monarki", false), ("Teokrati", false), ("Oligarki", false));
+
+            _context.Set<Question>().AddRange(_questions);
         }
 
         private async Task SeedQuestionOptionsAsync()
         {
-            var options = new[]
-            {
-                new QuestionOption { Id = Guid.NewGuid(), QuestionId = Guid.Parse("ffff1111-ffff-1111-ffff-111111111111"), OptionText = "3",  IsCorrect = false, SortOrder = 1 },
-                new QuestionOption { Id = Guid.NewGuid(), QuestionId = Guid.Parse("ffff1111-ffff-1111-ffff-111111111111"), OptionText = "4",  IsCorrect = true,  SortOrder = 2 },
-                new QuestionOption { Id = Guid.NewGuid(), QuestionId = Guid.Parse("ffff1111-ffff-1111-ffff-111111111111"), OptionText = "5",  IsCorrect = false, SortOrder = 3 },
-                new QuestionOption { Id = Guid.NewGuid(), QuestionId = Guid.Parse("ffff1111-ffff-1111-ffff-111111111111"), OptionText = "6",  IsCorrect = false, SortOrder = 4 },
-
-                new QuestionOption { Id = Guid.NewGuid(), QuestionId = Guid.Parse("ffff2222-ffff-2222-ffff-222222222222"), OptionText = "2",  IsCorrect = false, SortOrder = 1 },
-                new QuestionOption { Id = Guid.NewGuid(), QuestionId = Guid.Parse("ffff2222-ffff-2222-ffff-222222222222"), OptionText = "3",  IsCorrect = true,  SortOrder = 2 },
-                new QuestionOption { Id = Guid.NewGuid(), QuestionId = Guid.Parse("ffff2222-ffff-2222-ffff-222222222222"), OptionText = "4",  IsCorrect = false, SortOrder = 3 },
-                new QuestionOption { Id = Guid.NewGuid(), QuestionId = Guid.Parse("ffff2222-ffff-2222-ffff-222222222222"), OptionText = "5",  IsCorrect = false, SortOrder = 4 },
-
-                new QuestionOption { Id = OptH2OId,      QuestionId = Guid.Parse("ffff3333-ffff-3333-ffff-333333333333"), OptionText = "H2O", IsCorrect = true,  SortOrder = 1 },
-                new QuestionOption { Id = Guid.NewGuid(), QuestionId = Guid.Parse("ffff3333-ffff-3333-ffff-333333333333"), OptionText = "CO2", IsCorrect = false, SortOrder = 2 },
-                new QuestionOption { Id = Guid.NewGuid(), QuestionId = Guid.Parse("ffff3333-ffff-3333-ffff-333333333333"), OptionText = "NaCl", IsCorrect = false, SortOrder = 3 },
-                new QuestionOption { Id = Guid.NewGuid(), QuestionId = Guid.Parse("ffff3333-ffff-3333-ffff-333333333333"), OptionText = "O2",  IsCorrect = false, SortOrder = 4 },
-
-                new QuestionOption { Id = OptTrueId,     QuestionId = Guid.Parse("ffff4444-ffff-4444-ffff-444444444444"), OptionText = "True",  IsCorrect = true,  SortOrder = 1 },
-                new QuestionOption { Id = Guid.NewGuid(), QuestionId = Guid.Parse("ffff4444-ffff-4444-ffff-444444444444"), OptionText = "False", IsCorrect = false, SortOrder = 2 },
-            };
-
-            _context.Set<QuestionOption>().AddRange(options);
+            _context.Set<QuestionOption>().AddRange(_options);
         }
 
-        // ===== Quizzes =====
+        // ─────────────────────────────── QUIZZES (per Level) ───────────────────────────────
         private async Task SeedQuizzesAsync()
         {
-            // subject-general quizzes (no TopicId/LevelId)
-            _context.Set<Quiz>().AddRange(
-                new Quiz
-                {
-                    Id = QuizMathId,
-                    SubjectId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
-                    ClassId = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd"), // 9B
-                    Title = "Basic Math Quiz",
-                    Description = "Introduction to basic mathematical concepts",
-                    IsPublished = true,
-                    CreatedById = Guid.Parse("11111111-1111-1111-1111-111111111111"),
-                    CreatedAt = DateTime.UtcNow.AddDays(-4)
-                },
-                new Quiz
-                {
-                    Id = QuizScienceId,
-                    SubjectId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                    ClassId = Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"), // 9C
-                    Title = "Science Fundamentals",
-                    Description = "Basic science concepts and principles",
-                    IsPublished = true,
-                    CreatedById = Guid.Parse("11111111-1111-1111-1111-111111111111"),
-                    CreatedAt = DateTime.UtcNow.AddDays(-3)
-                }
-            );
+            // Publicera samma innehåll till två olika klasser för "mycket data"
+            var classTargets = new[] { Class8A, Class9B };
 
-            // topic-scoped quiz: Math → Algebra → Level 1
-            var algebra = await _context.Set<Topic>()
-                .FirstOrDefaultAsync(t => t.SubjectId == Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa") && t.Name == "Algebra");
-
-            if (algebra != null)
+            foreach (var (topicId, topicName, subjectId) in new[]
             {
-                var level1Id = await _context.Set<Level>()
-                    .Where(l => l.TopicId == algebra.Id && l.LevelNumber == 1)
-                    .Select(l => (Guid?)l.Id)
-                    .FirstOrDefaultAsync();
+                (TopicAlgebra,  "Algebra",  SubjectMath),
+                (TopicGeometry, "Geometri", SubjectMath),
+                (TopicPhysics,  "Fysik",    SubjectScience),
+                (TopicBiology,  "Biologi",  SubjectScience),
+                (TopicWW2,      "Andra världskriget", SubjectHistory),
+                (TopicAncients, "Antikens civilisationer", SubjectHistory)
+            })
+            {
+                if (!_levelsByTopic.TryGetValue(topicId, out var levels)) continue;
 
-                _context.Set<Quiz>().Add(new Quiz
+                foreach (var level in levels)
                 {
-                    Id = QuizAlgebraL1Id,
-                    SubjectId = algebra.SubjectId,
-                    TopicId = algebra.Id,
-                    LevelId = level1Id, // may be null if not found, fine
-                    ClassId = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd"),
-                    Title = "Algebra – Level 1 Check",
-                    Description = "Algebra basics at Level 1",
-                    IsPublished = true,
-                    CreatedById = Guid.Parse("11111111-1111-1111-1111-111111111111"),
-                    CreatedAt = DateTime.UtcNow.AddDays(-2)
-                });
+                    foreach (var cls in classTargets)
+                    {
+                        var qzId = Guid.NewGuid();
+                        _quizByLevel[(topicId, level.LevelNumber)] = qzId;
+
+                        _quizzes.Add(new Quiz
+                        {
+                            Id = qzId,
+                            SubjectId = subjectId,
+                            TopicId = topicId,
+                            LevelId = level.Id,
+                            ClassId = cls,
+                            Title = $"{topicName} – Nivå {level.LevelNumber} Quiz",
+                            Description = $"Quiz kopplat till studietexten för {topicName}, nivå {level.LevelNumber}.",
+                            IsPublished = true,
+                            CreatedById = Guid.Parse("55555555-1111-1111-1111-555555555551"),
+                            CreatedAt = DateTime.UtcNow
+                        });
+                    }
+                }
             }
+
+            _context.Set<Quiz>().AddRange(_quizzes);
         }
 
         private async Task SeedQuizQuestionsAsync()
         {
-            _context.Set<QuizQuestion>().AddRange(
-                new QuizQuestion { Id = Guid.NewGuid(), QuizId = QuizMathId, QuestionId = Guid.Parse("ffff1111-ffff-1111-ffff-111111111111"), SortOrder = 1 },
-                new QuizQuestion { Id = Guid.NewGuid(), QuizId = QuizMathId, QuestionId = Guid.Parse("ffff2222-ffff-2222-ffff-222222222222"), SortOrder = 2 },
-                new QuizQuestion { Id = Guid.NewGuid(), QuizId = QuizScienceId, QuestionId = Guid.Parse("ffff3333-ffff-3333-ffff-333333333333"), SortOrder = 1 },
-                new QuizQuestion { Id = Guid.NewGuid(), QuizId = QuizScienceId, QuestionId = Guid.Parse("ffff4444-ffff-4444-ffff-444444444444"), SortOrder = 2 }
-            );
+            // Koppla alla frågor per (topic, level) till rätt quizId
+            var quizQuestions = new List<QuizQuestion>();
 
-            // add the Algebra L1 quiz questions (reuse math questions)
-            var algebraQuiz = await _context.Set<Quiz>().FindAsync(QuizAlgebraL1Id);
-            if (algebraQuiz != null)
+            foreach (var kv in _questionIdsByLevel)
             {
-                _context.Set<QuizQuestion>().AddRange(
-                    new QuizQuestion { Id = Guid.NewGuid(), QuizId = QuizAlgebraL1Id, QuestionId = Guid.Parse("ffff1111-ffff-1111-ffff-111111111111"), SortOrder = 1 },
-                    new QuizQuestion { Id = Guid.NewGuid(), QuizId = QuizAlgebraL1Id, QuestionId = Guid.Parse("ffff2222-ffff-2222-ffff-222222222222"), SortOrder = 2 }
-                );
-            }
-        }
+                var key = kv.Key;                // (topicId, levelNumber)
+                var qIds = kv.Value;
 
-        // ===== AI Templates =====
-        private async Task SeedAiTemplatesAsync()
-        {
-            var templates = new[]
-            {
-                new AiTemplate
+                if (!_quizByLevel.TryGetValue(key, out var quizId)) continue;
+
+                int order = 1;
+                foreach (var qId in qIds)
                 {
-                    Id = Guid.NewGuid(),
-                    SubjectId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
-                    Prompt = "Generate a math question about {topic} with difficulty level {difficulty}",
-                    DifficultyMin = Difficulty.easy,
-                    DifficultyMax = Difficulty.hard,
-                    CreatedById = Guid.Parse("11111111-1111-1111-1111-111111111111"),
-                    CreatedAt = DateTime.UtcNow.AddDays(-6)
-                },
-                new AiTemplate
-                {
-                    Id = Guid.NewGuid(),
-                    SubjectId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                    Prompt = "Create a science question about {topic} for students",
-                    DifficultyMin = Difficulty.easy,
-                    DifficultyMax = Difficulty.medium,
-                    CreatedById = Guid.Parse("44444444-4444-4444-4444-444444444444"),
-                    CreatedAt = DateTime.UtcNow.AddDays(-5)
-                }
-            };
-
-            _context.Set<AiTemplate>().AddRange(templates);
-        }
-
-        // ===== Attempts (add a lot for Mary) =====
-        private async Task SeedAttemptsAsync()
-        {
-            var mary = Guid.Parse("22222222-2222-2222-2222-222222222222");
-            var bob = Guid.Parse("33333333-3333-3333-3333-333333333333");
-
-            var attempts = new List<Attempt>
-            {
-                // Existing ones
-                new Attempt { Id = Guid.NewGuid(), UserId = mary, QuizId = QuizMathId,    StartedAt = DateTime.UtcNow.AddDays(-7), CompletedAt = DateTime.UtcNow.AddDays(-7).AddMinutes(15), Score = 85, XpEarned = 100 },
-                new Attempt { Id = Guid.NewGuid(), UserId = bob,  QuizId = QuizMathId,    StartedAt = DateTime.UtcNow.AddDays(-5), CompletedAt = DateTime.UtcNow.AddDays(-5).AddMinutes(20), Score = 75, XpEarned = 85 },
-                new Attempt { Id = Guid.NewGuid(), UserId = mary, QuizId = QuizScienceId, StartedAt = DateTime.UtcNow.AddDays(-3), CompletedAt = DateTime.UtcNow.AddDays(-3).AddMinutes(12), Score = 90, XpEarned = 120 },
-
-                // Extra for Mary: re-attempt Math and do Algebra L1
-                new Attempt { Id = Guid.NewGuid(), UserId = mary, QuizId = QuizMathId,       StartedAt = DateTime.UtcNow.AddDays(-2), CompletedAt = DateTime.UtcNow.AddDays(-2).AddMinutes(10), Score = 92, XpEarned = 140 },
-                new Attempt { Id = Guid.NewGuid(), UserId = mary, QuizId = QuizAlgebraL1Id,  StartedAt = DateTime.UtcNow.AddDays(-1), CompletedAt = DateTime.UtcNow.AddDays(-1).AddMinutes(8),  Score = 88, XpEarned = 130 }
-            };
-
-            _context.Set<Attempt>().AddRange(attempts);
-        }
-
-        // ===== Responses (tie to Mary's attempts) =====
-        private async Task SeedResponsesAsync()
-        {
-            var mary = Guid.Parse("22222222-2222-2222-2222-222222222222");
-
-            // Pick Mary's latest two attempts (one Math, one Algebra L1 if present)
-            var maryAttempts = await _context.Set<Attempt>()
-                .Where(a => a.UserId == mary)
-                .OrderBy(a => a.StartedAt)
-                .ToListAsync();
-
-            if (maryAttempts.Count == 0) return;
-
-            var resp = new List<Response>();
-
-            // answer water + earth for science attempt if exists
-            var scienceAttempt = maryAttempts.FirstOrDefault(a => a.QuizId == QuizScienceId);
-            if (scienceAttempt != null)
-            {
-                resp.Add(new Response
-                {
-                    Id = Guid.NewGuid(),
-                    AttemptId = scienceAttempt.Id,
-                    QuestionId = Guid.Parse("ffff3333-ffff-3333-ffff-333333333333"),
-                    SelectedOptionId = OptH2OId,
-                    IsCorrect = true,
-                    TimeMs = 8500
-                });
-                resp.Add(new Response
-                {
-                    Id = Guid.NewGuid(),
-                    AttemptId = scienceAttempt.Id,
-                    QuestionId = Guid.Parse("ffff4444-ffff-4444-ffff-444444444444"),
-                    SelectedOptionId = OptTrueId,
-                    IsCorrect = true,
-                    TimeMs = 6200
-                });
-            }
-
-            // math attempt: 2+2 and 2x+5=11 → pick correct options (4 and 3)
-            var mathAttempt = maryAttempts.LastOrDefault(a => a.QuizId == QuizMathId);
-            if (mathAttempt != null)
-            {
-                var opt4 = await _context.Set<QuestionOption>()
-                    .Where(o => o.QuestionId == Guid.Parse("ffff1111-ffff-1111-ffff-111111111111") && o.IsCorrect)
-                    .Select(o => o.Id)
-                    .FirstOrDefaultAsync();
-
-                var opt3 = await _context.Set<QuestionOption>()
-                    .Where(o => o.QuestionId == Guid.Parse("ffff2222-ffff-2222-ffff-222222222222") && o.IsCorrect)
-                    .Select(o => o.Id)
-                    .FirstOrDefaultAsync();
-
-                resp.Add(new Response
-                {
-                    Id = Guid.NewGuid(),
-                    AttemptId = mathAttempt.Id,
-                    QuestionId = Guid.Parse("ffff1111-ffff-1111-ffff-111111111111"),
-                    SelectedOptionId = opt4,
-                    IsCorrect = true,
-                    TimeMs = 5000
-                });
-                resp.Add(new Response
-                {
-                    Id = Guid.NewGuid(),
-                    AttemptId = mathAttempt.Id,
-                    QuestionId = Guid.Parse("ffff2222-ffff-2222-ffff-222222222222"),
-                    SelectedOptionId = opt3,
-                    IsCorrect = true,
-                    TimeMs = 7200
-                });
-            }
-
-            // algebra attempt mirrors math questions
-            var algebraAttempt = maryAttempts.LastOrDefault(a => a.QuizId == QuizAlgebraL1Id);
-            if (algebraAttempt != null)
-            {
-                var opt4 = await _context.Set<QuestionOption>()
-                    .Where(o => o.QuestionId == Guid.Parse("ffff1111-ffff-1111-ffff-111111111111") && o.IsCorrect)
-                    .Select(o => o.Id)
-                    .FirstOrDefaultAsync();
-
-                var opt3 = await _context.Set<QuestionOption>()
-                    .Where(o => o.QuestionId == Guid.Parse("ffff2222-ffff-2222-ffff-222222222222") && o.IsCorrect)
-                    .Select(o => o.Id)
-                    .FirstOrDefaultAsync();
-
-                resp.Add(new Response
-                {
-                    Id = Guid.NewGuid(),
-                    AttemptId = algebraAttempt.Id,
-                    QuestionId = Guid.Parse("ffff1111-ffff-1111-ffff-111111111111"),
-                    SelectedOptionId = opt4,
-                    IsCorrect = true,
-                    TimeMs = 4500
-                });
-                resp.Add(new Response
-                {
-                    Id = Guid.NewGuid(),
-                    AttemptId = algebraAttempt.Id,
-                    QuestionId = Guid.Parse("ffff2222-ffff-2222-ffff-222222222222"),
-                    SelectedOptionId = opt3,
-                    IsCorrect = true,
-                    TimeMs = 6300
-                });
-            }
-
-            _context.Set<Response>().AddRange(resp);
-        }
-
-        // ===== Duels =====
-        private async Task SeedDuelsAsync()
-        {
-            _context.Set<Duel>().AddRange(
-                new Duel
-                {
-                    Id = Duel1Id,
-                    SubjectId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"), // Math
-                    Status = DuelStatus.completed,
-                    BestOf = 3,
-                    StartedAt = DateTime.UtcNow.AddDays(-2),
-                    EndedAt = DateTime.UtcNow.AddDays(-2).AddMinutes(15),
-                    CreatedAt = DateTime.UtcNow.AddDays(-2).AddHours(-1)
-                },
-                new Duel
-                {
-                    Id = Guid.NewGuid(),
-                    SubjectId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"), // Science
-                    Status = DuelStatus.pending,
-                    BestOf = 5,
-                    CreatedAt = DateTime.UtcNow.AddHours(-2)
-                }
-            );
-        }
-
-        private async Task SeedDuelParticipantsAsync()
-        {
-            _context.Set<DuelParticipant>().AddRange(
-                new DuelParticipant
-                {
-                    Id = Guid.NewGuid(),
-                    DuelId = Duel1Id,
-                    UserId = Guid.Parse("22222222-2222-2222-2222-222222222222"), // Mary
-                    Score = 2,
-                    Result = DuelResult.win
-                },
-                new DuelParticipant
-                {
-                    Id = Guid.NewGuid(),
-                    DuelId = Duel1Id,
-                    UserId = Guid.Parse("33333333-3333-3333-3333-333333333333"), // Bob
-                    InvitedById = Guid.Parse("22222222-2222-2222-2222-222222222222"),
-                    Score = 1,
-                    Result = DuelResult.lose
-                }
-            );
-        }
-
-        private async Task SeedDuelRoundsAsync()
-        {
-            _context.Set<DuelRound>().AddRange(
-                new DuelRound { Id = Guid.NewGuid(), DuelId = Duel1Id, RoundNumber = 1, QuestionId = Guid.Parse("ffff1111-ffff-1111-ffff-111111111111"), TimeLimitSeconds = 30 },
-                new DuelRound { Id = Guid.NewGuid(), DuelId = Duel1Id, RoundNumber = 2, QuestionId = Guid.Parse("ffff2222-ffff-2222-ffff-222222222222"), TimeLimitSeconds = 45 }
-            );
-        }
-
-        // ===== Unlock Rules (now pick levels via Topic under Math) =====
-        private async Task SeedUnlockRulesAsync()
-        {
-            var mathSubjectId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
-
-            // Get any topic under Math (prefer Algebra)
-            var mathTopic = await _context.Set<Topic>()
-                .Where(t => t.SubjectId == mathSubjectId)
-                .OrderBy(t => t.Name == "Algebra" ? 0 : 1).ThenBy(t => t.SortOrder)
-                .FirstOrDefaultAsync();
-
-            if (mathTopic == null) return;
-
-            var levels = await _context.Set<Level>()
-                .Where(l => l.TopicId == mathTopic.Id)
-                .OrderBy(l => l.LevelNumber)
-                .Take(2)
-                .ToListAsync();
-
-            if (levels.Count >= 2)
-            {
-                var unlockRules = new[]
-                {
-                    new UnlockRule
+                    quizQuestions.Add(new QuizQuestion
                     {
                         Id = Guid.NewGuid(),
-                        SubjectId = mathSubjectId,
-                        FromLevelId = levels[0].Id,
-                        ToLevelId   = levels[1].Id,
-                        Condition = UnlockConditionType.attempt_count,
-                        Threshold = 80
-                    }
-                };
-
-                _context.Set<UnlockRule>().AddRange(unlockRules);
-            }
-        }
-
-        // ===== User Progress (more for Mary; tracked at Subject, optionally Topic/Level) =====
-        // ===== User Progress (more for Mary; tracked at Subject, optionally Topic/Level) =====
-        private async Task SeedUserProgressAsync()
-        {
-            var mary = Guid.Parse("22222222-2222-2222-2222-222222222222");
-            var bob = Guid.Parse("33333333-3333-3333-3333-333333333333");
-
-            var mathSubjectId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
-            var scienceSubjectId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
-
-            // Find Algebra topic & its Level 1/2 for realistic read states
-            var algebra = await _context.Set<Topic>()
-                .FirstOrDefaultAsync(t => t.SubjectId == mathSubjectId && t.Name == "Algebra");
-
-            Guid? algebraL1 = null;
-            Guid? algebraL2 = null;
-
-            if (algebra != null)
-            {
-                var alLevels = await _context.Set<Level>()
-                    .Where(l => l.TopicId == algebra.Id && (l.LevelNumber == 1 || l.LevelNumber == 2))
-                    .ToDictionaryAsync(l => l.LevelNumber, l => l.Id);
-
-                algebraL1 = alLevels.TryGetValue(1, out var l1) ? l1 : (Guid?)null;
-                algebraL2 = alLevels.TryGetValue(2, out var l2) ? l2 : (Guid?)null;
-            }
-
-            var now = DateTime.UtcNow;
-
-            var progress = new List<UserProgress>
-    {
-        // ----- Subject-level XP progress -----
-        new UserProgress
-        {
-            Id = Guid.NewGuid(),
-            UserId = mary,
-            SubjectId = mathSubjectId,
-            Xp = 750,
-            LastActivity = now.AddHours(-3)
-        },
-        new UserProgress
-        {
-            Id = Guid.NewGuid(),
-            UserId = mary,
-            SubjectId = scienceSubjectId,
-            Xp = 520,
-            LastActivity = now.AddHours(-5)
-        },
-        new UserProgress
-        {
-            Id = Guid.NewGuid(),
-            UserId = bob,
-            SubjectId = mathSubjectId,
-            Xp = 320,
-            LastActivity = now.AddDays(-1)
-        }
-    };
-
-            // ----- Per-level study-read states -----
-            // Mary: has read Algebra Level 1 (so she can take the quiz), not yet Level 2
-            if (algebra != null && algebraL1.HasValue)
-            {
-                progress.Add(new UserProgress
-                {
-                    Id = Guid.NewGuid(),
-                    UserId = mary,
-                    SubjectId = algebra.SubjectId,
-                    TopicId = algebra.Id,
-                    LevelId = algebraL1.Value,
-                    Xp = 0, // per-level XP not required; subject XP used elsewhere
-                    LastActivity = now.AddDays(-1),
-                    HasReadStudyText = true,
-                    ReadAt = now.AddDays(-1)
-                });
-            }
-            if (algebra != null && algebraL2.HasValue)
-            {
-                progress.Add(new UserProgress
-                {
-                    Id = Guid.NewGuid(),
-                    UserId = mary,
-                    SubjectId = algebra.SubjectId,
-                    TopicId = algebra.Id,
-                    LevelId = algebraL2.Value,
-                    Xp = 0,
-                    LastActivity = now.AddHours(-12),
-                    HasReadStudyText = false,
-                    ReadAt = null
-                });
-            }
-
-            // Bob: hasn’t read Algebra Level 1 yet (explicit row showing not-read)
-            if (algebra != null && algebraL1.HasValue)
-            {
-                progress.Add(new UserProgress
-                {
-                    Id = Guid.NewGuid(),
-                    UserId = bob,
-                    SubjectId = algebra.SubjectId,
-                    TopicId = algebra.Id,
-                    LevelId = algebraL1.Value,
-                    Xp = 0,
-                    LastActivity = now.AddDays(-2),
-                    HasReadStudyText = false,
-                    ReadAt = null
-                });
-            }
-
-            _context.Set<UserProgress>().AddRange(progress);
-        }
-
-
-        // ===== AI Generations =====
-        private async Task SeedAiGenerationsAsync()
-        {
-            var aiTemplate = _context.Set<AiTemplate>().First();
-
-            var generations = new[]
-            {
-                new AiGeneration
-                {
-                    Id = Guid.NewGuid(),
-                    TemplateId = aiTemplate.Id,
-                    QuestionId = Guid.Parse("ffff1111-ffff-1111-ffff-111111111111"),
-                    ModelName = "GPT-4",
-                    ModelVersion = "gpt-4-0613",
-                    Metadata = "{\"temperature\": 0.7, \"max_tokens\": 500}",
-                    GeneratedAt = DateTime.UtcNow.AddDays(-10)
-                },
-                new AiGeneration
-                {
-                    Id = Guid.NewGuid(),
-                    TemplateId = aiTemplate.Id,
-                    QuestionId = Guid.Parse("ffff2222-ffff-2222-ffff-222222222222"),
-                    ModelName = "Claude-3",
-                    ModelVersion = "claude-3-sonnet-20240229",
-                    Metadata = "{\"temperature\": 0.5, \"max_tokens\": 750}",
-                    GeneratedAt = DateTime.UtcNow.AddDays(-8)
+                        QuizId = quizId,
+                        QuestionId = qId,
+                        SortOrder = order++
+                    });
                 }
-            };
+            }
 
-            _context.Set<AiGeneration>().AddRange(generations);
+            _context.Set<QuizQuestion>().AddRange(quizQuestions);
         }
     }
 

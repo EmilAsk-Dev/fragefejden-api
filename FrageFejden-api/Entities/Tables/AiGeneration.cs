@@ -13,7 +13,7 @@ namespace FrageFejden.Entities
         public Guid QuestionId { get; set; }
         public string? ModelName { get; set; }
         public string? ModelVersion { get; set; }
-        public string? Metadata { get; set; }    // JSON
+        public string? Metadata { get; set; }    
         public DateTime GeneratedAt { get; set; }
 
         public AiTemplate? Template { get; set; }

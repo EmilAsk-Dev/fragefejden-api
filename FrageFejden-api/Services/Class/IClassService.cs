@@ -22,6 +22,12 @@ public sealed class ScoreDto
     public double Score { get; set; }
 }
 
+public sealed record VisibleMemberDto(
+    Guid Id,
+    string FullName,
+    string? AvatarUrl
+);
+
 public interface IClassService
 {
     Task<(Guid Id, string Name)?> FindClassByJoinCodeAsync(string joinCode, CancellationToken ct);
@@ -50,4 +56,7 @@ public interface IClassService
 
     Task<double?> GetPointsForUser(Guid userId, CancellationToken ct);
     Task<List<ScoreDto>> GetScoresForClassAsync(Guid userId, Guid classId, CancellationToken ct);
+
+    Task<IEnumerable<VisibleMemberDto>> GetVisibleMembersAsync(Guid classId, Guid callerId, CancellationToken ct);
+
 }

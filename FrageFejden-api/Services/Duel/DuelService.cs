@@ -1,7 +1,7 @@
-
-using FrageFejden.Entities;
+﻿using FrageFejden.Entities;
 using FrageFejden.Entities.Enums;
 using FrageFejden.Services.Interfaces;
+using FrageFejden_api.Entities.Tables;
 using Microsoft.EntityFrameworkCore;
 
 namespace FrageFejden.Services
@@ -19,65 +19,64 @@ namespace FrageFejden.Services
 
         public async Task<Duel> CreateDuelAsync(Guid initiatorId, Guid subjectId, Guid? levelId = null, int bestOf = 5)
         {
-            try
+            if (bestOf <= 0) bestOf = 5;
+            if (bestOf % 2 == 0) bestOf += 1;
+
+            var subjectExists = await _context.Set<Subject>()
+                .AsNoTracking()
+                .AnyAsync(s => s.Id == subjectId);
+            if (!subjectExists) throw new ArgumentException("Subject not found", nameof(subjectId));
+
+            if (levelId.HasValue)
             {
-                if (!await CanUserCreateDuelAsync(initiatorId, subjectId))
-                {
-                    throw new UnauthorizedAccessException("User cannot create duel for this subject");
-                }
-
-                var duel = new Duel
-                {
-                    Id = Guid.NewGuid(),
-                    SubjectId = subjectId,
-                    LevelId = levelId,
-                    Status = DuelStatus.pending,
-                    BestOf = bestOf
-                };
-
-                _context.Duels.Add(duel);
-
-
-                var initiatorParticipant = new DuelParticipant
-                {
-                    Id = Guid.NewGuid(),
-                    DuelId = duel.Id,
-                    UserId = initiatorId,
-                    Score = 0
-                };
-
-                _context.Set<DuelParticipant>().Add(initiatorParticipant);
-                await _context.SaveChangesAsync();
-
-                return duel;
+                var levelValid = await _context.Set<Level>()
+                    .AnyAsync(l => l.Id == levelId.Value &&
+                                   _context.Set<Topic>().Any(t => t.Id == l.TopicId && t.SubjectId == subjectId));
+                if (!levelValid)
+                    throw new ArgumentException("Level does not belong to subject", nameof(levelId));
             }
-            catch (Exception ex)
+
+            if (!await CanUserCreateDuelAsync(initiatorId, subjectId))
+                throw new UnauthorizedAccessException("User cannot create duel for this subject");
+
+            var duel = new Duel
             {
-                _logger.LogError(ex, "Error creating duel for user {UserId} in subject {SubjectId}", initiatorId, subjectId);
-                throw;
-            }
+                Id = Guid.NewGuid(),
+                SubjectId = subjectId,
+                LevelId = levelId,
+                Status = DuelStatus.pending,
+                BestOf = bestOf,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.Duels.Add(duel);
+            _context.Set<DuelParticipant>().Add(new DuelParticipant
+            {
+                Id = Guid.NewGuid(),
+                DuelId = duel.Id,
+                UserId = initiatorId,
+                Score = 0
+            });
+
+            await _context.SaveChangesAsync();
+            return duel;
         }
 
         public async Task<DuelParticipant> InviteToQuelAsync(Guid duelId, Guid inviterId, Guid inviteeId)
         {
             try
             {
-                var duel = await GetDuelByIdAsync(duelId);
-                if (duel == null)
-                    throw new ArgumentException("Duel not found");
+                var duel = await GetDuelByIdAsync(duelId) ?? throw new ArgumentException("Duel not found");
 
                 if (duel.Status != DuelStatus.pending)
                     throw new InvalidOperationException("Cannot invite to non-pending duel");
-
 
                 var inviterParticipant = duel.Participants.FirstOrDefault(p => p.UserId == inviterId);
                 if (inviterParticipant == null)
                     throw new UnauthorizedAccessException("User is not a participant in this duel");
 
-
                 if (duel.Participants.Any(p => p.UserId == inviteeId))
                     throw new InvalidOperationException("User is already a participant in this duel");
-
 
                 if (!await AreUsersInSameClassAsync(inviterId, inviteeId))
                     throw new InvalidOperationException("Users are not in the same class");
@@ -113,7 +112,6 @@ namespace FrageFejden.Services
                 var participant = duel.Participants.FirstOrDefault(p => p.UserId == userId);
                 if (participant == null || participant.InvitedById == null) return false;
 
-
                 if (duel.Participants.Count == 2)
                 {
                     duel.Status = DuelStatus.active;
@@ -141,7 +139,6 @@ namespace FrageFejden.Services
 
                 _context.Set<DuelParticipant>().Remove(participant);
 
-
                 if (!duel.Participants.Any(p => p.InvitedById != null))
                 {
                     duel.Status = DuelStatus.pending;
@@ -162,13 +159,15 @@ namespace FrageFejden.Services
             try
             {
                 var duel = await GetDuelByIdAsync(duelId);
-                if (duel == null || duel.Status != DuelStatus.active) return false;
+                if (duel == null) return false;
 
-                duel.Status = DuelStatus.active;
-                duel.StartedAt = DateTime.UtcNow;
+                if (duel.Participants.Count < 2 || duel.Status != DuelStatus.active)
+                    return false;
 
+                duel.StartedAt ??= DateTime.UtcNow;
 
-                await CreateDuelRoundAsync(duelId, 1);
+                if (!duel.Rounds.Any())
+                    await CreateDuelRoundAsync(duelId, 1);
 
                 await _context.SaveChangesAsync();
                 return true;
@@ -182,101 +181,146 @@ namespace FrageFejden.Services
 
         public async Task<DuelRound> CreateDuelRoundAsync(Guid duelId, int roundNumber)
         {
-            try
+            var duel = await GetDuelByIdAsync(duelId) ?? throw new ArgumentException("Duel not found");
+
+            
+            var quizQuestions = _context.Set<QuizQuestion>()
+                .AsNoTracking()
+                .Where(qq => _context.Set<Quiz>()
+                    .Any(qz => qz.Id == qq.QuizId &&
+                               qz.IsPublished &&
+                               qz.SubjectId == duel.SubjectId));
+
+           
+            if (duel.LevelId.HasValue)
             {
-                var duel = await GetDuelByIdAsync(duelId);
-                if (duel == null) throw new ArgumentException("Duel not found");
-
-
-                var query = _context.Questions
-                    .Where(q => q.SubjectId == duel.SubjectId);
-
-                if (duel.LevelId.HasValue)
-                {
-                    var level = await _context.Set<Level>()
-                        .FirstOrDefaultAsync(l => l.Id == duel.LevelId);
-                    if (level != null)
-                    {
-
-                        query = query.Where(q => (int)q.Difficulty <= level.LevelNumber);
-                    }
-                }
-
-                var question = await query.OrderBy(q => Guid.NewGuid()).FirstOrDefaultAsync();
-                if (question == null) throw new InvalidOperationException("No questions available for this duel");
-
-                var round = new DuelRound
-                {
-                    Id = Guid.NewGuid(),
-                    DuelId = duelId,
-                    RoundNumber = roundNumber,
-                    QuestionId = question.Id,
-                    TimeLimitSeconds = 30
-                };
-
-                _context.Set<DuelRound>().Add(round);
-                await _context.SaveChangesAsync();
-
-                return round;
+                quizQuestions = quizQuestions.Where(qq => _context.Set<Quiz>()
+                    .Any(qz => qz.Id == qq.QuizId && qz.LevelId == duel.LevelId));
             }
-            catch (Exception ex)
+
+            var pool = _context.Set<Question>()
+                .AsNoTracking()
+                .Where(q => quizQuestions.Select(qq => qq.QuestionId).Distinct().Contains(q.Id));
+
+            
+            var usedIds = _context.Set<DuelRound>().Where(r => r.DuelId == duelId).Select(r => r.QuestionId);
+            var available = pool.Where(q => !usedIds.Contains(q.Id));
+
+            var availableCount = await available.CountAsync();
+            if (availableCount == 0)
+                throw new InvalidOperationException("No available questions left for this duel.");
+
+            var skip = Random.Shared.Next(availableCount);
+
+            var picked = await available
+                .OrderBy(q => q.Id) 
+                .Skip(skip)
+                .Take(1)
+                .Select(q => new
+                {
+                    q.Id,
+                    q.Stem,
+                    Options = q.Options
+                        .OrderBy(o => o.SortOrder)
+                        .Select(o => new { o.OptionText, o.IsCorrect })
+                        .ToList()
+                })
+                .FirstAsync();
+
+            var snapOptions = picked.Options.Select(o => o.OptionText).ToList();
+            var correctIndex = picked.Options.FindIndex(o => o.IsCorrect);
+
+            var round = new DuelRound
             {
-                _logger.LogError(ex, "Error creating round {RoundNumber} for duel {DuelId}", roundNumber, duelId);
-                throw;
-            }
+                Id = Guid.NewGuid(),
+                DuelId = duelId,
+                RoundNumber = roundNumber,
+                QuestionId = picked.Id,
+                TimeLimitSeconds = 30,
+                TextSnapshot = picked.Stem,
+                AlternativesSnapshot = snapOptions,
+                CorrectIndexSnapshot = correctIndex,
+                StartedAt = DateTime.UtcNow
+            };
+
+            _context.DuelRounds.Add(round);
+            await _context.SaveChangesAsync();
+            return round;
         }
 
         public async Task<bool> SubmitRoundAnswerAsync(Guid duelId, Guid userId, Guid questionId, Guid? selectedOptionId, int timeMs)
         {
-            try
+            var duel = await GetDuelByIdAsync(duelId);
+            if (duel == null || duel.Status != DuelStatus.active) return false;
+            if (!duel.Participants.Any(p => p.UserId == userId)) return false;
+
+            var round = duel.Rounds
+                .OrderByDescending(r => r.RoundNumber)
+                .FirstOrDefault(r => r.EndedAt == null);
+            if (round == null || round.QuestionId != questionId) return false;
+            if (round.EndedAt != null) return false;
+            if (round.Answers.Any(a => a.UserId == userId)) return false;
+
+            
+            int selectedIndex = -1;
+            if (selectedOptionId.HasValue)
             {
-                var duel = await GetDuelByIdAsync(duelId);
-                if (duel == null || duel.Status != DuelStatus.active) return false;
+                var optText = await _context.Set<QuestionOption>()
+                    .Where(o => o.Id == selectedOptionId && o.QuestionId == questionId)
+                    .Select(o => o.OptionText)
+                    .FirstOrDefaultAsync();
 
-                var participant = duel.Participants.FirstOrDefault(p => p.UserId == userId);
-                if (participant == null) return false;
+                if (optText != null)
+                    selectedIndex = round.AlternativesSnapshot.FindIndex(t => t == optText);
+            }
 
+            var isCorrect = selectedIndex == round.CorrectIndexSnapshot;
 
-                bool isCorrect = false;
-                if (selectedOptionId.HasValue)
-                {
-                    var option = await _context.Set<QuestionOption>()
-                        .FirstOrDefaultAsync(o => o.Id == selectedOptionId && o.QuestionId == questionId);
-                    isCorrect = option?.IsCorrect ?? false;
-                }
+            _context.Set<DuelAnswer>().Add(new DuelAnswer
+            {
+                Id = Guid.NewGuid(),
+                DuelRoundId = round.Id,
+                UserId = userId,
+                SelectedIndex = Math.Max(-1, selectedIndex),
+                IsCorrect = isCorrect,
+                TimeMs = Math.Max(0, timeMs),
+                AnsweredAt = DateTime.UtcNow
+            });
 
-                if (isCorrect)
-                {
-                    participant.Score++;
-                }
-
-
-                var maxPossibleRounds = duel.BestOf;
-                var currentRound = duel.Rounds.Count;
-                var requiredWins = (duel.BestOf / 2) + 1;
-
-                if (participant.Score >= requiredWins || currentRound >= maxPossibleRounds)
-                {
-                    await CompleteDuelAsync(duelId);
-                }
-                else
-                {
-
-                    var allAnswersSubmitted = true;
-                    if (allAnswersSubmitted)
-                    {
-                        await CreateDuelRoundAsync(duelId, currentRound + 1);
-                    }
-                }
-
+           
+            var totalPlayers = duel.Participants.Count;
+            if (round.Answers.Count + 1 >= totalPlayers)
+            {
                 await _context.SaveChangesAsync();
-                return true;
+
+                round = await _context.DuelRounds
+                    .Include(r => r.Answers)
+                    .Include(r => r.Duel).ThenInclude(d => d.Participants)
+                    .FirstAsync(r => r.Id == round.Id);
+
+                round.EndedAt = DateTime.UtcNow;
+
+                var correct = round.Answers.Where(a => a.IsCorrect).ToList();
+                if (correct.Count == 1)
+                {
+                    duel.Participants.First(p => p.UserId == correct[0].UserId).Score += 1;
+                }
+                else if (correct.Count > 1)
+                {
+                    var fastest = correct.OrderBy(a => a.TimeMs).First();
+                    duel.Participants.First(p => p.UserId == fastest.UserId).Score += 1;
+                }
+
+                var needed = (duel.BestOf + 1) / 2;
+                var top = duel.Participants.Max(p => p.Score);
+                if (top >= needed || duel.Rounds.Count >= duel.BestOf)
+                    await CompleteDuelAsync(duelId);
+                else
+                    await CreateDuelRoundAsync(duelId, round.RoundNumber + 1);
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error submitting answer for user {UserId} in duel {DuelId}", userId, duelId);
-                return false;
-            }
+
+            await _context.SaveChangesAsync();
+            return true;
         }
 
         public async Task<bool> CompleteDuelAsync(Guid duelId)
@@ -289,23 +333,17 @@ namespace FrageFejden.Services
                 duel.Status = DuelStatus.completed;
                 duel.EndedAt = DateTime.UtcNow;
 
-                // Determine results
-                var sortedParticipants = duel.Participants.OrderByDescending(p => p.Score).ToList();
-
-                if (sortedParticipants.Count >= 2)
+                var sorted = duel.Participants.OrderByDescending(p => p.Score).ToList();
+                if (sorted.Count >= 2)
                 {
-                    if (sortedParticipants[0].Score > sortedParticipants[1].Score)
+                    if (sorted[0].Score > sorted[1].Score)
                     {
-                        sortedParticipants[0].Result = DuelResult.win;
-                        sortedParticipants[1].Result = DuelResult.lose;
+                        sorted[0].Result = DuelResult.win;
+                        sorted[1].Result = DuelResult.lose;
                     }
                     else
                     {
-                        // It's a draw
-                        foreach (var participant in sortedParticipants)
-                        {
-                            participant.Result = DuelResult.draw;
-                        }
+                        foreach (var p in sorted) p.Result = DuelResult.draw;
                     }
                 }
 
@@ -324,11 +362,9 @@ namespace FrageFejden.Services
             return await _context.Duels
                 .Include(d => d.Subject)
                 .Include(d => d.Level)
-                .Include(d => d.Participants)
-                    .ThenInclude(p => p.User)
-                .Include(d => d.Rounds)
-                    .ThenInclude(r => r.Question)
-                        .ThenInclude(q => q.Options)
+                .Include(d => d.Participants).ThenInclude(p => p.User)
+                .Include(d => d.Rounds).ThenInclude(r => r.Question).ThenInclude(q => q.Options)
+                .Include(d => d.Rounds).ThenInclude(r => r.Answers)
                 .FirstOrDefaultAsync(d => d.Id == duelId);
         }
 
@@ -337,14 +373,10 @@ namespace FrageFejden.Services
             var query = _context.Duels
                 .Include(d => d.Subject)
                 .Include(d => d.Level)
-                .Include(d => d.Participants)
-                    .ThenInclude(p => p.User)
+                .Include(d => d.Participants).ThenInclude(p => p.User)
                 .Where(d => d.Participants.Any(p => p.UserId == userId));
 
-            if (status.HasValue)
-            {
-                query = query.Where(d => d.Status == status);
-            }
+            if (status.HasValue) query = query.Where(d => d.Status == status);
 
             return await query
                 .OrderByDescending(d => d.StartedAt ?? d.CreatedAt)
@@ -356,22 +388,19 @@ namespace FrageFejden.Services
             return await _context.Duels
                 .Include(d => d.Subject)
                 .Include(d => d.Level)
-                .Include(d => d.Participants)
-                    .ThenInclude(p => p.User)
+                .Include(d => d.Participants).ThenInclude(p => p.User)
                 .Where(d => d.Status == DuelStatus.pending &&
-                           d.Participants.Any(p => p.UserId == userId && p.InvitedById != null))
+                            d.Participants.Any(p => p.UserId == userId && p.InvitedById != null))
                 .OrderByDescending(d => d.CreatedAt)
                 .ToListAsync();
         }
 
         public async Task<List<DuelParticipant>> GetClassmatesForDuelAsync(Guid userId, Guid subjectId)
         {
-
             var userClasses = await _context.Set<ClassMembership>()
                 .Where(cm => cm.UserId == userId)
                 .Select(cm => cm.ClassId)
                 .ToListAsync();
-
 
             var classmates = await _context.Set<ClassMembership>()
                 .Include(cm => cm.User)
@@ -389,37 +418,70 @@ namespace FrageFejden.Services
 
         public async Task<bool> CanUserCreateDuelAsync(Guid userId, Guid subjectId)
         {
-
-            var hasProgress = await _context.Set<UserProgress>()
-                .AnyAsync(up => up.UserId == userId && up.SubjectId == subjectId);
-
-            if (hasProgress) return true;
-
+            var subjectExists = await _context.Set<Subject>()
+                .AsNoTracking()
+                .AnyAsync(s => s.Id == subjectId);
+            if (!subjectExists) return false;
 
             var userClasses = await _context.Set<ClassMembership>()
                 .Where(cm => cm.UserId == userId)
                 .Select(cm => cm.ClassId)
                 .ToListAsync();
 
-            var hasClassAccess = await _context.Set<Quiz>()
-                .AnyAsync(q => q.SubjectId == subjectId &&
-                              userClasses.Contains(q.ClassId.Value));
+            if (userClasses.Count > 0)
+            {
+                var subjectInUserClass = await _context.Set<Subject>()
+                    .AnyAsync(s => s.Id == subjectId && s.ClassId.HasValue && userClasses.Contains(s.ClassId.Value));
+                if (subjectInUserClass) return true;
+            }
 
-            return hasClassAccess;
+            var hasAnyProgress = await _context.Set<UserProgress>()
+                .AnyAsync(up => up.UserId == userId && up.SubjectId == subjectId);
+            if (hasAnyProgress) return true;
+
+            var allLevels = await GetAllLevelIdsForSubject(subjectId);
+            if (allLevels.Count == 0) return true;
+
+            var hasAllLevels = await HasCompletedOrUnlockedAllLevels(userId, allLevels);
+            return hasAllLevels;
+        }
+
+        private async Task<List<Guid>> GetAllLevelIdsForSubject(Guid subjectId)
+        {
+            return await _context.Set<Level>()
+                .Where(l => _context.Set<Topic>().Where(t => t.SubjectId == subjectId).Select(t => t.Id).Contains(l.TopicId))
+                .Select(l => l.Id)
+                .ToListAsync();
+        }
+
+        private async Task<bool> HasCompletedOrUnlockedAllLevels(Guid userId, List<Guid> levelIds)
+        {
+            if (levelIds.Count == 0) return true;
+
+            var readLevels = await _context.Set<UserProgress>()
+                .Where(up => up.UserId == userId && up.LevelId != null && levelIds.Contains(up.LevelId.Value) && up.HasReadStudyText == true)
+                .Select(up => up.LevelId!.Value)
+                .Distinct()
+                .ToListAsync();
+
+            var remaining = levelIds.Except(readLevels).ToList();
+            if (remaining.Count == 0) return true;
+
+           
+            var completedViaQuizzes = await _context.Set<Attempt>()
+                .Where(a => a.UserId == userId && a.CompletedAt != null && a.Quiz.LevelId != null && remaining.Contains(a.Quiz.LevelId.Value))
+                .Select(a => a.Quiz.LevelId!.Value)
+                .Distinct()
+                .ToListAsync();
+
+            remaining = remaining.Except(completedViaQuizzes).ToList();
+            return remaining.Count == 0;
         }
 
         public async Task<bool> AreUsersInSameClassAsync(Guid userId1, Guid userId2)
         {
-            var user1Classes = await _context.Set<ClassMembership>()
-                .Where(cm => cm.UserId == userId1)
-                .Select(cm => cm.ClassId)
-                .ToListAsync();
-
-            var user2Classes = await _context.Set<ClassMembership>()
-                .Where(cm => cm.UserId == userId2)
-                .Select(cm => cm.ClassId)
-                .ToListAsync();
-
+            var user1Classes = await _context.Set<ClassMembership>().Where(cm => cm.UserId == userId1).Select(cm => cm.ClassId).ToListAsync();
+            var user2Classes = await _context.Set<ClassMembership>().Where(cm => cm.UserId == userId2).Select(cm => cm.ClassId).ToListAsync();
             return user1Classes.Intersect(user2Classes).Any();
         }
 
@@ -429,10 +491,7 @@ namespace FrageFejden.Services
                 .Include(dp => dp.Duel)
                 .Where(dp => dp.UserId == userId && dp.Duel.Status == DuelStatus.completed);
 
-            if (subjectId.HasValue)
-            {
-                query = query.Where(dp => dp.Duel.SubjectId == subjectId);
-            }
+            if (subjectId.HasValue) query = query.Where(dp => dp.Duel.SubjectId == subjectId);
 
             var participations = await query.ToListAsync();
 
@@ -443,18 +502,12 @@ namespace FrageFejden.Services
 
             var winRate = total > 0 ? (double)wins / total : 0.0;
 
-
-            var recentParticipations = participations
-                .OrderByDescending(p => p.Duel.EndedAt)
-                .ToList();
-
+            var recent = participations.OrderByDescending(p => p.Duel.EndedAt).ToList();
             int currentStreak = 0;
-            foreach (var participation in recentParticipations)
+            foreach (var p in recent)
             {
-                if (participation.Result == DuelResult.win)
-                    currentStreak++;
-                else
-                    break;
+                if (p.Result == DuelResult.win) currentStreak++;
+                else break;
             }
 
             return new DuelStats
