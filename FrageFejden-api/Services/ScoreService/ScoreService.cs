@@ -12,6 +12,7 @@ public class ScoreService
     public class SubjectScoreDto
     {
         public Guid UserId { get; set; }
+        public string FullName { get; set; }
         public int TotalExp { get; set; }
     }
 
@@ -57,10 +58,25 @@ public async Task<List<SubjectScoreDto>> GetSubjectLeaderboardAsync(Guid subject
                 UserId = g.Key,
                 TotalExp = g.Sum(x => x.exp)
             })
-            .OrderByDescending(x => x.TotalExp)
             .ToListAsync();
 
-        return scores;
+    // Hämta namn från Users-tabellen
+    var userIds = scores.Select(s => s.UserId).ToList();
+    var users = await _db.Users
+        .Where(u => userIds.Contains(u.Id))
+        .ToDictionaryAsync(u => u.Id, u => u.FullName);
+
+    var result = scores
+        .Select(s => new SubjectScoreDto
+        {
+            UserId = s.UserId,
+            TotalExp = s.TotalExp,
+            FullName = users.TryGetValue(s.UserId, out var name) ? name : "Okänd"
+        })
+        .OrderByDescending(s => s.TotalExp)
+        .ToList();
+
+    return result;
     }
 
 

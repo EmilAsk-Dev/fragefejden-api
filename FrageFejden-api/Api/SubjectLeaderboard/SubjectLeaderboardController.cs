@@ -5,9 +5,9 @@ public class ExpDto
     public int Exp { get; set; }
 }
 
-    
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/Subject")]
+
 public class SubjectLeaderboardController : ControllerBase
 {
     private readonly ScoreService _scoreService;
