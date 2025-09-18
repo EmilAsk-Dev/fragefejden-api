@@ -123,7 +123,7 @@ builder.Services.AddScoped<IDuelService, DuelService>();
 builder.Services.AddScoped<IQuizService, QuizService>();
 builder.Services.AddScoped<IProgressService, ProgressService>();
 builder.Services.AddScoped<DailyQuestionService>();
-
+builder.Services.AddScoped<ScoreService>();
 builder.Services.AddSingleton<QuestionBank>();        
 builder.Services.AddScoped<DailyQuestionService>();
 
