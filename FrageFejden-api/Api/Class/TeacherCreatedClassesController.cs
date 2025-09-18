@@ -7,7 +7,7 @@ using System.Security.Claims;
 [ApiController]
 [Route("api/teacher/created-classes")]
 [Produces("application/json")]
-[Authorize] // räcker
+[Authorize] 
 public sealed class TeacherCreatedClassesController : ControllerBase
 {
     private readonly IClassService _classService;
