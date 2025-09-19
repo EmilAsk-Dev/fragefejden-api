@@ -124,6 +124,7 @@ builder.Services.AddScoped<IQuizService, QuizService>();
 builder.Services.AddScoped<IProgressService, ProgressService>();
 builder.Services.AddScoped<DailyQuestionService>();
 
+
 builder.Services.AddSingleton<QuestionBank>();        
 builder.Services.AddScoped<DailyQuestionService>();
 

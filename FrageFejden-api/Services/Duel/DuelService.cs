@@ -3,6 +3,7 @@ using FrageFejden.Entities.Enums;
 using FrageFejden.Services.Interfaces;
 using FrageFejden_api.Entities.Tables;
 using Microsoft.EntityFrameworkCore;
+using System.Data;
 
 namespace FrageFejden.Services
 {
@@ -248,20 +249,38 @@ namespace FrageFejden.Services
             return round;
         }
 
-        public async Task<bool> SubmitRoundAnswerAsync(Guid duelId, Guid userId, Guid questionId, Guid? selectedOptionId, int timeMs)
+        public async Task<bool> SubmitRoundAnswerAsync(
+    Guid duelId, Guid userId, Guid questionId, Guid? selectedOptionId, int timeMs)
         {
-            var duel = await GetDuelByIdAsync(duelId);
-            if (duel == null || duel.Status != DuelStatus.active) return false;
-            if (!duel.Participants.Any(p => p.UserId == userId)) return false;
+            // Use a SERIALIZABLE or at least REPEATABLE READ transaction to prevent races
+            await using var tx = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
 
-            var round = duel.Rounds
-                .OrderByDescending(r => r.RoundNumber)
-                .FirstOrDefault(r => r.EndedAt == null);
-            if (round == null || round.QuestionId != questionId) return false;
-            if (round.EndedAt != null) return false;
-            if (round.Answers.Any(a => a.UserId == userId)) return false;
+            var duel = await _context.Duels
+                .Include(d => d.Participants)
+                .FirstOrDefaultAsync(d => d.Id == duelId);
 
-            
+            if (duel == null || duel.Status != DuelStatus.active)
+                return false;
+
+            if (!duel.Participants.Any(p => p.UserId == userId))
+                return false;
+
+            // 🔑 Bind to the round by duel + questionId, and it must be still open
+            var round = await _context.DuelRounds
+                .Include(r => r.Answers)
+                .FirstOrDefaultAsync(r =>
+                    r.DuelId == duelId &&
+                    r.QuestionId == questionId &&
+                    r.EndedAt == null);
+
+            if (round == null)
+                return false;
+
+            // Prevent duplicate answers by the same user
+            if (round.Answers.Any(a => a.UserId == userId))
+                return false;
+
+            // Map selected option to the snapshot index
             int selectedIndex = -1;
             if (selectedOptionId.HasValue)
             {
@@ -287,12 +306,17 @@ namespace FrageFejden.Services
                 AnsweredAt = DateTime.UtcNow
             });
 
-           
-            var totalPlayers = duel.Participants.Count;
-            if (round.Answers.Count + 1 >= totalPlayers)
-            {
-                await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
 
+            // Count answers from DB to avoid stale in-memory counts
+            var totalPlayers = duel.Participants.Count;
+            var answeredCount = await _context.Set<DuelAnswer>()
+                .CountAsync(a => a.DuelRoundId == round.Id);
+
+            // If this submit completed the round, finalize and maybe create next round
+            if (answeredCount >= totalPlayers)
+            {
+                // Re-load with answers & participants for scoring
                 round = await _context.DuelRounds
                     .Include(r => r.Answers)
                     .Include(r => r.Duel).ThenInclude(d => d.Participants)
@@ -313,13 +337,20 @@ namespace FrageFejden.Services
 
                 var needed = (duel.BestOf + 1) / 2;
                 var top = duel.Participants.Max(p => p.Score);
+
                 if (top >= needed || duel.Rounds.Count >= duel.BestOf)
+                {
                     await CompleteDuelAsync(duelId);
+                }
                 else
+                {
                     await CreateDuelRoundAsync(duelId, round.RoundNumber + 1);
+                }
+
+                await _context.SaveChangesAsync();
             }
 
-            await _context.SaveChangesAsync();
+            await tx.CommitAsync();
             return true;
         }
 
