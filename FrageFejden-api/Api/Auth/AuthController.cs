@@ -45,20 +45,34 @@ namespace FrageFejden.Api.Auth
                 if (!ModelState.IsValid) return ValidationProblem(ModelState);
 
                 if (await _userManager.FindByEmailAsync(req.Email) is not null)
-                    return Conflict(new { error = "Email already in use." });
+                    return Conflict(new { error = "E-postadressen används redan." });
 
                 if (await _userManager.FindByNameAsync(req.UserName) is not null)
-                    return Conflict(new { error = "Username is taken." });
-
-
+                    return Conflict(new { error = "Användarnamnet är redan upptaget." });
 
                 var user = new AppUser { UserName = req.UserName, Email = req.Email, FullName = req.Fullname };
                 var create = await _userManager.CreateAsync(user, req.Password);
 
-
                 if (!create.Succeeded)
-                    return BadRequest(new { errors = create.Errors.Select(e => e.Description) });
-                    
+                {
+                    var errors = create.Errors.Select(e =>
+                    {
+                        return e.Code switch
+                        {
+                            "PasswordTooShort" => "Lösenordet måste vara minst 8 tecken långt.",
+                            "PasswordRequiresNonAlphanumeric" => "Lösenordet måste innehålla minst ett specialtecken.",
+                            "PasswordRequiresDigit" => "Lösenordet måste innehålla minst en siffra.",
+                            "PasswordRequiresUpper" => "Lösenordet måste innehålla minst en stor bokstav.",
+                            "PasswordRequiresLower" => "Lösenordet måste innehålla minst en liten bokstav.",
+                            "DuplicateUserName" => "Användarnamnet är redan upptaget.",
+                            "DuplicateEmail" => "E-postadressen används redan.",
+                            _ => e.Description 
+                        };
+                    }).ToList();
+
+                    return BadRequest(new { errors });
+                }
+
                 _ = await _userManager.AddToRoleAsync(user, "Student");
 
                 var token = await _jwt.CreateTokenAsync(user);
@@ -71,6 +85,7 @@ namespace FrageFejden.Api.Auth
         }
 
 
+
         [SwaggerOperation(
             Summary = "Loggar in en användare och returnerar JWT.",
             Description = "Loggar in en användare med e-post eller användarnamn och lösenord. Returnerar en JWT som används för autentisering i efterföljande anrop."
@@ -80,28 +95,34 @@ namespace FrageFejden.Api.Auth
         public async Task<IActionResult> Login([FromBody] LoginRequest req)
         {
             if (string.IsNullOrWhiteSpace(req.EmailOrUserName) || string.IsNullOrWhiteSpace(req.Password))
-                return Unauthorized();
+                return Unauthorized(new { error = "Användarnamn och lösenord måste anges." });
 
             var user = await _userManager.FindByEmailAsync(req.EmailOrUserName)
                        ?? await _userManager.FindByNameAsync(req.EmailOrUserName);
-            if (user is null) return Unauthorized();
+
+            if (user is null)
+                return Unauthorized(new { error = "Felaktigt användarnamn eller lösenord." });
 
             if (_userManager.SupportsUserLockout && await _userManager.IsLockedOutAsync(user))
-                return Unauthorized();
+                return Unauthorized(new { error = "Kontot är låst. Försök igen senare." });
 
             var pwValid = await _userManager.CheckPasswordAsync(user, req.Password);
             if (!pwValid)
             {
-                if (_userManager.SupportsUserLockout) await _userManager.AccessFailedAsync(user);
-                return Unauthorized();
+                if (_userManager.SupportsUserLockout)
+                    await _userManager.AccessFailedAsync(user);
+
+                return Unauthorized(new { error = "Felaktigt användarnamn eller lösenord." });
             }
 
-            if (_userManager.SupportsUserLockout) await _userManager.ResetAccessFailedCountAsync(user);
+            if (_userManager.SupportsUserLockout)
+                await _userManager.ResetAccessFailedCountAsync(user);
 
             var token = await _jwt.CreateTokenAsync(user);
             return Ok(token);
         }
 
+        
         [SwaggerOperation(
             Summary = "Loggar ut den aktuella användaren.",
             Description = "Loggar ut den aktuella användaren genom att ta bort JWT från klienten. Detta påverkar inte serverns tillstånd eftersom JWT är statslösa."
