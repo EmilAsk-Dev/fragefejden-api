@@ -265,6 +265,58 @@ namespace FrageFejden_api.Api.Statistics
             return Ok(leaderboard);
         }
 
+        // 9 
+        [HttpGet("response-time-per-student")]
+        [Authorize(Roles = "teacher")]
+        public async Task<ActionResult<List<ResponseTimePerStudentDto>>> GetResponseTimePerStudent([FromQuery] Guid? classId = null)
+        {
+            var teacherId = GetCurrentUserId();
+
+            // Begränsa till elever i lärarens egna klasser
+            var studentInTeachersClasses = _context.Set<ClassMembership>()
+                .Where(cm => cm.Class.CreatedById == teacherId && cm.RoleInClass == Role.student);
+
+            if (classId.HasValue)
+                studentInTeachersClasses = studentInTeachersClasses.Where(cm => cm.ClassId == classId.Value);
+
+            var studentsQ = studentInTeachersClasses
+                .Select(cm => new { cm.UserId, cm.ClassId, ClassName = cm.Class.Name, cm.User.FullName })
+                .Distinct();
+
+            // Hämta responses för lärarens quiz (med tid satt)
+            var responsesQ = _context.Set<Response>()
+                .Where(r => r.Attempt.Quiz.CreatedById == teacherId && r.TimeMs != null);
+
+            // Filtrera på urvalet av elever
+            var query =
+                from s in studentsQ
+                join r in responsesQ on s.UserId equals r.Attempt.UserId into sr
+                select new
+                {
+                    s.UserId,
+                    s.FullName,
+                    s.ClassId,
+                    s.ClassName,
+                    AvgSeconds = sr.Any() ? sr.Average(x => x.TimeMs!.Value) / 1000.0 : (double?)null,
+                    Count = sr.Count()
+                };
+
+            var list = await query
+                .Where(x => x.AvgSeconds != null)
+                .Select(x => new ResponseTimePerStudentDto
+                {
+                    StudentId = x.UserId,
+                    StudentName = x.FullName,
+                    ClassId = x.ClassId,
+                    ClassName = x.ClassName,
+                    AvgSeconds = Math.Round(x.AvgSeconds!.Value, 1),
+                    ResponseCount = x.Count
+                })
+                .ToListAsync();
+
+            return Ok(list);
+        }
+
         // Bonus: Quiz-specific statistics
         [HttpGet("quiz/{quizId}/statistics")]
         public async Task<ActionResult<QuizStatisticsDto>> GetQuizStatistics(Guid quizId)
@@ -403,5 +455,15 @@ namespace FrageFejden_api.Api.Statistics
         public int LowestScore { get; set; }
         public double AverageCompletionTimeMinutes { get; set; }
         public double CorrectAnswerPercentage { get; set; }
+    }
+
+    public class ResponseTimePerStudentDto
+    {
+        public Guid StudentId { get; set; }
+        public string? StudentName { get; set; } // valfritt, nice to have
+        public Guid? ClassId { get; set; }       // valfritt
+        public string? ClassName { get; set; }   // valfritt
+        public double AvgSeconds { get; set; }
+        public int ResponseCount { get; set; }
     }
 }

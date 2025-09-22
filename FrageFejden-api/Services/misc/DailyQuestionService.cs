@@ -128,12 +128,40 @@ public class DailyQuestionService
         }
         longest = Math.Max(longest, run);
 
+
+        // Veckomål mån–fre
+        const int WEEK_GOAL = 5;
+
+        static DayOfWeek DayOfWeekFor(DateOnly d)
+            => d.ToDateTime(TimeOnly.MinValue).DayOfWeek;
+
+        static bool IsWeekday(DateOnly d)
+        {
+            var dow = DayOfWeekFor(d);
+            return dow != DayOfWeek.Saturday && dow != DayOfWeek.Sunday;
+        }
+
+        // hitta måndag denna vecka
+        int offsetToMonday = ((int)DayOfWeekFor(today) + 6) % 7;
+        var monday = today.AddDays(-offsetToMonday);
+        var weekEndExclusive = monday.AddDays(7);
+
+        var weekAnswered = answeredDays
+            .Where(d => d >= monday && d < weekEndExclusive)
+            .Where(IsWeekday)
+            .Distinct()
+            .Count();
+
         return new UserDailyStats
         {
             TotalAnswered = total,
             CurrentStreak = current,
             LongestStreak = longest,
-            LastAnsweredDate = last
+            LastAnsweredDate = last,
+
+            // returnera veckomål
+            WeekAnswered = weekAnswered,  
+            WeekGoal = WEEK_GOAL
         };
     }
 
@@ -143,5 +171,8 @@ public class DailyQuestionService
         public int CurrentStreak { get; set; }
         public int LongestStreak { get; set; }
         public DateOnly? LastAnsweredDate { get; set; }
+
+        public int WeekAnswered { get; set; }   // hur många denna vecka (mån–fre)
+        public int WeekGoal { get; set; } = 5;  // standardmål per vecka = 5
     }
 }
