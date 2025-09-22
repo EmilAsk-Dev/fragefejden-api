@@ -217,6 +217,33 @@ namespace FrageFejden.Controllers
             return ok ? NoContent() : NotFound();
         }
 
+        [HttpGet("mine")]
+        [Authorize(Roles = "teacher,admin")]
+        [SwaggerOperation(Summary = "Lista ämnen för den nuvarande läraren (mine)")]
+        [ProducesResponseType(typeof(IEnumerable<SubjectDto>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetMySubjects()
+        {
+            var userId = GetUserId();
+            if (userId is null) return Unauthorized();
+
+            var items = await _subjects.GetSubjectsForTeacherAsync(userId.Value);
+            return Ok(items.Select(ToSubjectDto));
+        }
+
+        [HttpGet("{subjectId:guid}/topics/mine")]
+        [Authorize(Roles = "teacher,admin")]
+        [SwaggerOperation(Summary = "Lista ämnen i ett ämne där den nuvarande läraren har quiz (mine)")]
+        [ProducesResponseType(typeof(IEnumerable<TopicSummaryDto>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetMyTopicsInSubject(Guid subjectId)
+        {
+            var userId = GetUserId();
+            if (userId is null) return Unauthorized();
+
+            var topics = await _subjects.GetTeacherTopicsInSubjectAsync(userId.Value, subjectId);
+            return Ok(topics);
+        }
+
+
         // ===== mappers =====
         private static SubjectDto ToSubjectDto(Subject s) => new SubjectDto
         {
@@ -269,5 +296,6 @@ namespace FrageFejden.Controllers
                 .Select(v => v.Trim().ToLowerInvariant())
                 .Distinct();
         }
+
     }
 }
