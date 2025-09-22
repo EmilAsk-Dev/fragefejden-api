@@ -296,6 +296,20 @@ namespace FrageFejden.Controllers.Quiz
             var user = await _userManager.GetUserAsync(User);
             return user?.Id;
         }
+
+        // Hämtar alla quiz skapade av inloggad lärare
+        [SwaggerOperation(summary: "Hämtar alla quiz skapade av den inloggade användaren.")]
+        [Authorize(Roles = "teacher")]
+        [HttpGet("my-quizzes")]
+        [ProducesResponseType(typeof(IEnumerable<QuizSummaryDto>), 200)]
+        public async Task<ActionResult<IEnumerable<QuizSummaryDto>>> GetMyQuizzes()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
+
+            var quizzes = await _quizService.GetQuizzesByUserAsync(user.Id);
+            return Ok(quizzes);
+        }
     }
 
     public class UserQuizStatusDto
