@@ -34,6 +34,13 @@ namespace FrageFejden.Services
 
         // Subject-general quizzes (TopicId == null && LevelId == null)
         Task<IReadOnlyList<Quiz>> GetGeneralQuizzesForSubjectAsync(Guid subjectId, bool onlyPublished = true);
+
+        // Teacher -> Subjects
+        // alla ämnen som den inloggade läraren "äger" eller har skapat quiz i
+        Task<IReadOnlyList<Subject>> GetSubjectsForTeacherAsync(Guid teacherId);
+
+        // alla topics (kurser) i ett ämne där läraren har minst ett quiz
+        Task<IReadOnlyList<TopicSummaryDto>> GetTeacherTopicsInSubjectAsync(Guid teacherId, Guid subjectId);
     }
 
     // ===== Implementation =====
@@ -268,6 +275,57 @@ namespace FrageFejden.Services
             dto.CompletedLevels = dto.Levels.Count(x => x.IsCompleted);
             return dto;
         }
+
+        public async Task<IReadOnlyList<Subject>> GetSubjectsForTeacherAsync(Guid teacherId)
+        {
+            // 1) Ämnen läraren själv skapat
+            var ownedSubjectIds = _context.Subjects
+                .Where(s => s.CreatedById == teacherId)
+                .Select(s => s.Id);
+
+            // 2) Ämnen där läraren har skapat minst ett quiz
+            //    (antingen ämne direkt på quiz, eller via quiz.Topic.SubjectId)
+            var subjectIdsFromQuizzes = _context.Quizzes
+                .Where(q => q.CreatedById == teacherId)
+                .Select(q => q.TopicId != null ? q.Topic!.SubjectId : q.SubjectId);
+
+            var ids = await ownedSubjectIds
+                .Concat(subjectIdsFromQuizzes)
+                .Distinct()
+                .ToListAsync();
+
+            return await _context.Subjects
+                .AsNoTracking()
+                .Where(s => ids.Contains(s.Id))
+                .OrderBy(s => s.Name)
+                .ToListAsync();
+        }
+
+        public async Task<IReadOnlyList<TopicSummaryDto>> GetTeacherTopicsInSubjectAsync(Guid teacherId, Guid subjectId)
+        {
+            // Topic-IDs i aktuellt ämne där läraren har minst ett quiz
+            var topicIds = await _context.Quizzes
+                .Where(q => q.CreatedById == teacherId && q.TopicId != null && q.Topic!.SubjectId == subjectId)
+                .Select(q => q.TopicId!.Value)
+                .Distinct()
+                .ToListAsync();
+
+            return await _context.Topics
+                .AsNoTracking()
+                .Where(t => t.SubjectId == subjectId && topicIds.Contains(t.Id))
+                .OrderBy(t => t.SortOrder).ThenBy(t => t.Name)
+                .Select(t => new TopicSummaryDto
+                {
+                    TopicId = t.Id,
+                    SubjectId = t.SubjectId,       
+                    Name = t.Name,
+                    Description = t.Description,
+                    SortOrder = t.SortOrder,
+                    LevelCount = t.Levels.Count
+                })
+                .ToListAsync();
+        }
+
 
         // ---- Subject-general quizzes (no topic/level) ----
         public async Task<IReadOnlyList<Quiz>> GetGeneralQuizzesForSubjectAsync(Guid subjectId, bool onlyPublished = true)
