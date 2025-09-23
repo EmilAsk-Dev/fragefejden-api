@@ -120,12 +120,13 @@ namespace FrageFejden.DTOs.Duel
         public string Stem { get; set; } = null!;
         public string? Explanation { get; set; }
         public List<QuestionOptionDto> Options { get; set; } = new();
+
     }
 
     public class QuestionOptionDto
     {
         public Guid Id { get; set; }
         public string OptionText { get; set; } = null!;
-        public int SortOrder { get; set; }
+        public int SortOrder { get; set; }        
     }
 }

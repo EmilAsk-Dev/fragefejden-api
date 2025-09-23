@@ -3,6 +3,7 @@ using FrageFejden.Entities.Enums;
 using FrageFejden.Services.Interfaces;
 using FrageFejden_api.Entities.Tables;
 using Microsoft.EntityFrameworkCore;
+using System.Data;
 
 namespace FrageFejden.Services
 {
@@ -17,10 +18,12 @@ namespace FrageFejden.Services
             _logger = logger;
         }
 
+        // -------------------- CREATE / INVITES --------------------
+
         public async Task<Duel> CreateDuelAsync(Guid initiatorId, Guid subjectId, Guid? levelId = null, int bestOf = 5)
         {
             if (bestOf <= 0) bestOf = 5;
-            if (bestOf % 2 == 0) bestOf += 1;
+            if (bestOf % 2 == 0) bestOf += 1; // best-of must be odd
 
             var subjectExists = await _context.Set<Subject>()
                 .AsNoTracking()
@@ -154,6 +157,59 @@ namespace FrageFejden.Services
             }
         }
 
+        // -------------------- START / ROUNDS --------------------
+
+        /// <summary>
+        /// Build the complete question pool: all published quizzes that either
+        /// belong directly to the subject OR belong to any level under any topic of that subject.
+        /// If a duel.LevelId is specified, we restrict to that level.
+        /// </summary>
+        private async Task<List<Question>> BuildQuestionPoolAsync(Duel duel)
+        {
+            // Topics in the subject
+            var topicIds = await _context.Set<Topic>()
+                .Where(t => t.SubjectId == duel.SubjectId)
+                .Select(t => t.Id)
+                .ToListAsync();
+
+            // Levels under those topics
+            var levelIdsUnderSubject = await _context.Set<Level>()
+                .Where(l => topicIds.Contains(l.TopicId))
+                .Select(l => l.Id)
+                .ToListAsync();
+
+            // All published quizzes that belong to the subject OR belong to those levels
+            var quizQuery = _context.Set<Quiz>()
+                .AsNoTracking()
+                .Where(q => q.IsPublished &&
+                           (q.SubjectId == duel.SubjectId ||
+                           (q.LevelId != null && levelIdsUnderSubject.Contains(q.LevelId.Value))));
+
+            // If duel has a specific LevelId, restrict further
+            if (duel.LevelId.HasValue)
+            {
+                var lvl = duel.LevelId.Value;
+                quizQuery = quizQuery.Where(q => q.LevelId == lvl);
+            }
+
+            var quizIds = await quizQuery.Select(q => q.Id).ToListAsync();
+
+            // Question ids that appear in those quizzes
+            var questionIds = await _context.Set<QuizQuestion>()
+                .Where(qq => quizIds.Contains(qq.QuizId))
+                .Select(qq => qq.QuestionId)
+                .Distinct()
+                .ToListAsync();
+
+            // Load questions+options
+            var questions = await _context.Set<Question>()
+                .Where(q => questionIds.Contains(q.Id))
+                .Include(q => q.Options)
+                .ToListAsync();
+
+            return questions;
+        }
+
         public async Task<bool> StartDuelAsync(Guid duelId)
         {
             try
@@ -166,8 +222,48 @@ namespace FrageFejden.Services
 
                 duel.StartedAt ??= DateTime.UtcNow;
 
+                // Pre-generate all rounds up front if needed
                 if (!duel.Rounds.Any())
-                    await CreateDuelRoundAsync(duelId, 1);
+                {
+                    var pool = await BuildQuestionPoolAsync(duel);
+                    if (pool.Count == 0)
+                        throw new InvalidOperationException("No available questions for this duel/subject.");
+
+                    var take = Math.Min(duel.BestOf, pool.Count);
+
+                    // Shuffle and pick take items
+                    var selected = pool
+                        .OrderBy(_ => Guid.NewGuid())
+                        .Take(take)
+                        .ToList();
+
+                    var roundsToAdd = new List<DuelRound>();
+
+                    for (int i = 0; i < selected.Count; i++)
+                    {
+                        var q = selected[i];
+                        var opts = q.Options.OrderBy(o => o.SortOrder).ToList();
+
+                        var snapOptions = opts.Select(o => o.OptionText).ToList();
+                        var correctIndex = opts.FindIndex(o => o.IsCorrect);
+
+                        roundsToAdd.Add(new DuelRound
+                        {
+                            Id = Guid.NewGuid(),
+                            DuelId = duelId,
+                            RoundNumber = i + 1,
+                            QuestionId = q.Id,
+                            TimeLimitSeconds = 30,
+                            TextSnapshot = q.Stem,
+                            AlternativesSnapshot = snapOptions,
+                            CorrectIndexSnapshot = correctIndex,
+                            StartedAt = DateTime.MinValue,
+                            EndedAt = null
+                        });
+                    }
+
+                    _context.DuelRounds.AddRange(roundsToAdd);
+                }
 
                 await _context.SaveChangesAsync();
                 return true;
@@ -183,61 +279,31 @@ namespace FrageFejden.Services
         {
             var duel = await GetDuelByIdAsync(duelId) ?? throw new ArgumentException("Duel not found");
 
-            
-            var quizQuestions = _context.Set<QuizQuestion>()
-                .AsNoTracking()
-                .Where(qq => _context.Set<Quiz>()
-                    .Any(qz => qz.Id == qq.QuizId &&
-                               qz.IsPublished &&
-                               qz.SubjectId == duel.SubjectId));
+            var pool = await BuildQuestionPoolAsync(duel);
 
-           
-            if (duel.LevelId.HasValue)
-            {
-                quizQuestions = quizQuestions.Where(qq => _context.Set<Quiz>()
-                    .Any(qz => qz.Id == qq.QuizId && qz.LevelId == duel.LevelId));
-            }
+            // Exclude already-used questions
+            var usedIds = await _context.Set<DuelRound>()
+                .Where(r => r.DuelId == duelId)
+                .Select(r => r.QuestionId)
+                .ToListAsync();
 
-            var pool = _context.Set<Question>()
-                .AsNoTracking()
-                .Where(q => quizQuestions.Select(qq => qq.QuestionId).Distinct().Contains(q.Id));
-
-            
-            var usedIds = _context.Set<DuelRound>().Where(r => r.DuelId == duelId).Select(r => r.QuestionId);
-            var available = pool.Where(q => !usedIds.Contains(q.Id));
-
-            var availableCount = await available.CountAsync();
-            if (availableCount == 0)
+            var available = pool.Where(q => !usedIds.Contains(q.Id)).ToList();
+            if (available.Count == 0)
                 throw new InvalidOperationException("No available questions left for this duel.");
 
-            var skip = Random.Shared.Next(availableCount);
-
-            var picked = await available
-                .OrderBy(q => q.Id) 
-                .Skip(skip)
-                .Take(1)
-                .Select(q => new
-                {
-                    q.Id,
-                    q.Stem,
-                    Options = q.Options
-                        .OrderBy(o => o.SortOrder)
-                        .Select(o => new { o.OptionText, o.IsCorrect })
-                        .ToList()
-                })
-                .FirstAsync();
-
-            var snapOptions = picked.Options.Select(o => o.OptionText).ToList();
-            var correctIndex = picked.Options.FindIndex(o => o.IsCorrect);
+            var qPicked = available.OrderBy(_ => Guid.NewGuid()).First();
+            var opts = qPicked.Options.OrderBy(o => o.SortOrder).ToList();
+            var snapOptions = opts.Select(o => o.OptionText).ToList();
+            var correctIndex = opts.FindIndex(o => o.IsCorrect);
 
             var round = new DuelRound
             {
                 Id = Guid.NewGuid(),
                 DuelId = duelId,
                 RoundNumber = roundNumber,
-                QuestionId = picked.Id,
+                QuestionId = qPicked.Id,
                 TimeLimitSeconds = 30,
-                TextSnapshot = picked.Stem,
+                TextSnapshot = qPicked.Stem,
                 AlternativesSnapshot = snapOptions,
                 CorrectIndexSnapshot = correctIndex,
                 StartedAt = DateTime.UtcNow
@@ -248,20 +314,40 @@ namespace FrageFejden.Services
             return round;
         }
 
-        public async Task<bool> SubmitRoundAnswerAsync(Guid duelId, Guid userId, Guid questionId, Guid? selectedOptionId, int timeMs)
+        // -------------------- ANSWERS / COMPLETE --------------------
+
+        public async Task<bool> SubmitRoundAnswerAsync(
+            Guid duelId, Guid userId, Guid questionId, Guid? selectedOptionId, int timeMs)
         {
-            var duel = await GetDuelByIdAsync(duelId);
-            if (duel == null || duel.Status != DuelStatus.active) return false;
-            if (!duel.Participants.Any(p => p.UserId == userId)) return false;
+            // SERIALIZABLE (or REPEATABLE READ) to prevent race conditions
+            await using var tx = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
 
-            var round = duel.Rounds
-                .OrderByDescending(r => r.RoundNumber)
-                .FirstOrDefault(r => r.EndedAt == null);
-            if (round == null || round.QuestionId != questionId) return false;
-            if (round.EndedAt != null) return false;
-            if (round.Answers.Any(a => a.UserId == userId)) return false;
+            var duel = await _context.Duels
+                .Include(d => d.Participants)
+                .FirstOrDefaultAsync(d => d.Id == duelId);
 
-            
+            if (duel == null || duel.Status != DuelStatus.active)
+                return false;
+
+            if (!duel.Participants.Any(p => p.UserId == userId))
+                return false;
+
+            // Bind to the round by duel + questionId and ensure it's still open
+            var round = await _context.DuelRounds
+                .Include(r => r.Answers)
+                .FirstOrDefaultAsync(r =>
+                    r.DuelId == duelId &&
+                    r.QuestionId == questionId &&
+                    r.EndedAt == null);
+
+            if (round == null)
+                return false;
+
+            // Prevent duplicate answers by the same user
+            if (round.Answers.Any(a => a.UserId == userId))
+                return false;
+
+            // Map selected option to the snapshot index
             int selectedIndex = -1;
             if (selectedOptionId.HasValue)
             {
@@ -287,12 +373,17 @@ namespace FrageFejden.Services
                 AnsweredAt = DateTime.UtcNow
             });
 
-           
-            var totalPlayers = duel.Participants.Count;
-            if (round.Answers.Count + 1 >= totalPlayers)
-            {
-                await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
 
+            // Re-count from DB to avoid stale in-memory counts
+            var totalPlayers = duel.Participants.Count;
+            var answeredCount = await _context.Set<DuelAnswer>()
+                .CountAsync(a => a.DuelRoundId == round.Id);
+
+            // If this submit completed the round, finalize and maybe complete the duel
+            if (answeredCount >= totalPlayers)
+            {
+                // Reload with answers & participants for scoring
                 round = await _context.DuelRounds
                     .Include(r => r.Answers)
                     .Include(r => r.Duel).ThenInclude(d => d.Participants)
@@ -300,6 +391,7 @@ namespace FrageFejden.Services
 
                 round.EndedAt = DateTime.UtcNow;
 
+                // Score: if multiple correct, the fastest gets the point
                 var correct = round.Answers.Where(a => a.IsCorrect).ToList();
                 if (correct.Count == 1)
                 {
@@ -311,15 +403,29 @@ namespace FrageFejden.Services
                     duel.Participants.First(p => p.UserId == fastest.UserId).Score += 1;
                 }
 
+                // Compute “rounds played” = rounds that ended
+                var playedCount = await _context.Set<DuelRound>()
+                    .CountAsync(r => r.DuelId == duelId && r.EndedAt != null);
+
+                // Best-of threshold
                 var needed = (duel.BestOf + 1) / 2;
                 var top = duel.Participants.Max(p => p.Score);
-                if (top >= needed || duel.Rounds.Count >= duel.BestOf)
+
+                if (top >= needed || playedCount >= duel.BestOf)
+                {
                     await CompleteDuelAsync(duelId);
+                }
                 else
-                    await CreateDuelRoundAsync(duelId, round.RoundNumber + 1);
+                {
+                    // If you did NOT pre-create all rounds, you could create the next here:
+                    // await CreateDuelRoundAsync(duelId, round.RoundNumber + 1);
+                    // With pre-generated rounds, do nothing.
+                }
+
+                await _context.SaveChangesAsync();
             }
 
-            await _context.SaveChangesAsync();
+            await tx.CommitAsync();
             return true;
         }
 
@@ -356,6 +462,8 @@ namespace FrageFejden.Services
                 return false;
             }
         }
+
+        // -------------------- QUERIES --------------------
 
         public async Task<Duel?> GetDuelByIdAsync(Guid duelId)
         {
@@ -467,7 +575,6 @@ namespace FrageFejden.Services
             var remaining = levelIds.Except(readLevels).ToList();
             if (remaining.Count == 0) return true;
 
-           
             var completedViaQuizzes = await _context.Set<Attempt>()
                 .Where(a => a.UserId == userId && a.CompletedAt != null && a.Quiz.LevelId != null && remaining.Contains(a.Quiz.LevelId.Value))
                 .Select(a => a.Quiz.LevelId!.Value)

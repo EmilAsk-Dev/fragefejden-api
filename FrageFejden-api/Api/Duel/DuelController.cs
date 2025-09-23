@@ -36,7 +36,7 @@ namespace FrageFejden.Controllers
                 var userId = GetCurrentUserId();
                 var duel = await _duelService.CreateDuelAsync(userId, request.SubjectId, request.LevelId, request.BestOf);
 
-                // ✅ RELOAD WITH NAVIGATIONS
+                // Reload with navigations for a complete DTO
                 var full = await _duelService.GetDuelByIdAsync(duel.Id);
                 if (full == null) return NotFound("Duel not found after creation");
 
@@ -279,32 +279,53 @@ namespace FrageFejden.Controllers
             }
         }
 
+        // ---------- Mappers ----------
+
         private static QuestionDto BuildQuestionDtoFromSnapshot(DuelRound r)
         {
-            var q = r.Question; 
+            var q = r.Question;
+
+            // DB options ordered
+            var orderedDbOptions = (q?.Options ?? new List<QuestionOption>())
+                .OrderBy(o => o.SortOrder)
+                .ToList();
+
+            // Use snapshot texts primarily (frozen at round creation),
+            // fallback to current DB option texts if snapshot missing.
             var altTexts = (r.AlternativesSnapshot != null && r.AlternativesSnapshot.Count > 0)
                 ? r.AlternativesSnapshot
-                : (q?.Options?.OrderBy(o => o.SortOrder).Select(o => o.OptionText).ToList() ?? new List<string>());
+                : orderedDbOptions.Select(o => o.OptionText).ToList();
+
+            // Try to attach real DB option IDs by matching the text
+            var options = altTexts.Select((text, i) =>
+            {
+                var match = orderedDbOptions.FirstOrDefault(o => o.OptionText == text);
+                return new QuestionOptionDto
+                {
+                    Id = match?.Id ?? Guid.Empty, // real ID when possible (enables client to send back selectedOptionId)
+                    OptionText = text,
+                    SortOrder = i
+                    
+                };
+            }).ToList();
 
             return new QuestionDto
             {
                 Id = r.QuestionId,
-                Type = q?.Type ?? default,          
+                Type = q?.Type ?? default,
                 Difficulty = q?.Difficulty ?? default,
                 Stem = r.TextSnapshot ?? q?.Stem ?? string.Empty,
                 Explanation = q?.Explanation,
-                Options = altTexts.Select((t, i) => new QuestionOptionDto
-                {
-                    Id = Guid.Empty,                
-                    OptionText = t,
-                    SortOrder = i
-                }).ToList()
+                Options = options
+                // (Optional) If your DTO supports it, you can also expose:
+                // CorrectOptionId = (r.CorrectIndexSnapshot >= 0 && r.CorrectIndexSnapshot < options.Count)
+                //     ? options[r.CorrectIndexSnapshot].Id
+                //     : null
             };
         }
 
         private DuelDto MapDuelToDto(Duel duel, Guid currentUserId)
         {
-            
             var subjectDto = (duel.Subject != null)
                 ? new SubjectDto { Id = duel.Subject.Id, Name = duel.Subject.Name, Description = duel.Subject.Description }
                 : new SubjectDto { Id = duel.SubjectId, Name = "(Ämne)", Description = null };
@@ -339,18 +360,19 @@ namespace FrageFejden.Controllers
                 TimeLimitSeconds = r.TimeLimitSeconds
             }).ToList();
 
-            var currentRound = duel.Status == DuelStatus.active
-                ? roundsOrdered
-                    .OrderByDescending(r => r.RoundNumber)
-                    .Select(r => new DuelRoundDto
-                    {
-                        Id = r.Id,
-                        RoundNumber = r.RoundNumber,
-                        Question = BuildQuestionDtoFromSnapshot(r),
-                        TimeLimitSeconds = r.TimeLimitSeconds
-                    })
-                    .FirstOrDefault()
-                : null;
+            // Optionally compute a "current" round (lowest round without EndedAt)
+            DuelRoundDto? currentRound = null;
+            var activeRound = roundsOrdered.FirstOrDefault(r => r.EndedAt == null);
+            if (duel.Status == DuelStatus.active && activeRound != null)
+            {
+                currentRound = new DuelRoundDto
+                {
+                    Id = activeRound.Id,
+                    RoundNumber = activeRound.RoundNumber,
+                    Question = BuildQuestionDtoFromSnapshot(activeRound),
+                    TimeLimitSeconds = activeRound.TimeLimitSeconds
+                };
+            }
 
             return new DuelDto
             {
