@@ -45,20 +45,34 @@ namespace FrageFejden.Api.Auth
                 if (!ModelState.IsValid) return ValidationProblem(ModelState);
 
                 if (await _userManager.FindByEmailAsync(req.Email) is not null)
-                    return Conflict(new { error = "Email already in use." });
+                    return Conflict(new { error = "E-postadressen används redan." });
 
                 if (await _userManager.FindByNameAsync(req.UserName) is not null)
-                    return Conflict(new { error = "Username is taken." });
-
-
+                    return Conflict(new { error = "Användarnamnet är redan upptaget." });
 
                 var user = new AppUser { UserName = req.UserName, Email = req.Email, FullName = req.Fullname };
                 var create = await _userManager.CreateAsync(user, req.Password);
 
-
                 if (!create.Succeeded)
-                    return BadRequest(new { errors = create.Errors.Select(e => e.Description) });
-                    
+                {
+                    var errors = create.Errors.Select(e =>
+                    {
+                        return e.Code switch
+                        {
+                            "PasswordTooShort" => "Lösenordet måste vara minst 8 tecken långt.",
+                            "PasswordRequiresNonAlphanumeric" => "Lösenordet måste innehålla minst ett specialtecken.",
+                            "PasswordRequiresDigit" => "Lösenordet måste innehålla minst en siffra.",
+                            "PasswordRequiresUpper" => "Lösenordet måste innehålla minst en stor bokstav.",
+                            "PasswordRequiresLower" => "Lösenordet måste innehålla minst en liten bokstav.",
+                            "DuplicateUserName" => "Användarnamnet är redan upptaget.",
+                            "DuplicateEmail" => "E-postadressen används redan.",
+                            _ => e.Description 
+                        };
+                    }).ToList();
+
+                    return BadRequest(new { errors });
+                }
+
                 _ = await _userManager.AddToRoleAsync(user, "Student");
 
                 var token = await _jwt.CreateTokenAsync(user);
@@ -70,6 +84,53 @@ namespace FrageFejden.Api.Auth
             }
         }
 
+        [HttpPost("registerTeacher")]
+        [AllowAnonymous]
+        public async Task<IActionResult> RegisterTeacher([FromBody] RegisterRequest req)
+        {
+            try
+            {
+                if (!ModelState.IsValid) return ValidationProblem(ModelState);
+
+                if (await _userManager.FindByEmailAsync(req.Email) is not null)
+                    return Conflict(new { error = "E-postadressen används redan." });
+
+                if (await _userManager.FindByNameAsync(req.UserName) is not null)
+                    return Conflict(new { error = "Användarnamnet är redan upptaget." });
+
+                var user = new AppUser { UserName = req.UserName, Email = req.Email, FullName = req.Fullname };
+                var create = await _userManager.CreateAsync(user, req.Password);
+
+                if (!create.Succeeded)
+                {
+                    var errors = create.Errors.Select(e =>
+                    {
+                        return e.Code switch
+                        {
+                            "PasswordTooShort" => "Lösenordet måste vara minst 8 tecken långt.",
+                            "PasswordRequiresNonAlphanumeric" => "Lösenordet måste innehålla minst ett specialtecken.",
+                            "PasswordRequiresDigit" => "Lösenordet måste innehålla minst en siffra.",
+                            "PasswordRequiresUpper" => "Lösenordet måste innehålla minst en stor bokstav.",
+                            "PasswordRequiresLower" => "Lösenordet måste innehålla minst en liten bokstav.",
+                            "DuplicateUserName" => "Användarnamnet är redan upptaget.",
+                            "DuplicateEmail" => "E-postadressen används redan.",
+                            _ => e.Description
+                        };
+                    }).ToList();
+
+                    return BadRequest(new { errors });
+                }
+
+                _ = await _userManager.AddToRoleAsync(user, "teacher");
+
+                var token = await _jwt.CreateTokenAsync(user);
+                return Created(string.Empty, token);
+            }
+            catch (Exception ex)
+            {
+                return Problem(detail: ex.Message, statusCode: 500);
+            }
+        }
 
         [SwaggerOperation(
             Summary = "Loggar in en användare och returnerar JWT.",

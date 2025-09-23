@@ -57,12 +57,21 @@ using (SqlConnection connection = new SqlConnection(connectionString))
 // Identity
 builder.Services.AddIdentityCore<AppUser>(opt =>
 {
+    // Krav på användare
     opt.User.RequireUniqueEmail = true;
+
+    // Krav på lösenord
+    opt.Password.RequiredLength = 8;
+    opt.Password.RequireDigit = true;
+    opt.Password.RequireUppercase = true;
+    opt.Password.RequireLowercase = true;
+    opt.Password.RequireNonAlphanumeric = true;
 })
 .AddRoles<IdentityRole<Guid>>()
 .AddEntityFrameworkStores<AppDbContext>()
 .AddSignInManager()
 .AddDefaultTokenProviders();
+
 
 // JWT Auth
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
