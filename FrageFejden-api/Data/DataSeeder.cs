@@ -765,7 +765,6 @@ namespace FrageFejden.Data
         // ── OLOF-SEEDER ─────────────────────────────
         private async Task SeedOlofQuizzesAsync(CancellationToken ct = default)
         {
-            // Vad vi vill lägga till för Olof
             var specs = new[]
             {
         new {
@@ -792,7 +791,7 @@ namespace FrageFejden.Data
 
             foreach (var s in specs)
             {
-                // Hoppa om det redan finns (idempotent seeding)
+                // Hoppa om det redan finns 
                 if (await _context.Set<Quiz>().AnyAsync(q => q.Id == s.QuizId, ct))
                     continue;
 
@@ -802,7 +801,7 @@ namespace FrageFejden.Data
                     .Select(l => l.Id)
                     .FirstAsync(ct);
 
-                // Skapa själva quizet – viktigt: CreatedById = OlofId
+                // Skapa själva quizet
                 _context.Set<Quiz>().Add(new Quiz
                 {
                     Id = s.QuizId,
@@ -846,9 +845,6 @@ namespace FrageFejden.Data
             await _context.SaveChangesAsync(ct);
         }
 
-
-        // ── OLOF-SEEDER: Hjälpare ──────────────────────────────────────────────
-        // ── OLOF-SEEDER: Hjälpare för att resetta data för ett quiz ─────────────────
         // ── OLOF-SEEDER: Hjälpare för att resetta data för ett quiz ─────────────────
         private async Task ResetQuizAttemptsAndResponsesAsync(Guid quizId, CancellationToken ct)
         {
@@ -1020,39 +1016,49 @@ namespace FrageFejden.Data
             await SeedResponsesFromAttemptAnswersAsync(ct);
         }
 
-        // ───────────────────────────────
-
         private async Task SeedResponsesFromAttemptAnswersAsync(CancellationToken ct = default)
         {
-            // Idempotent: gör inget om det redan finns rows
-            if (await _context.Set<Response>().AnyAsync(ct)) return;
-
-            // Hämta alla attempt-answers (vi behöver AttemptId för joinar i API:t)
+            // Hämta alla AttemptAnswers
             var answers = await _context.Set<AttemptAnswer>()
                 .AsNoTracking()
                 .ToListAsync(ct);
 
-            var rows = new List<Response>(answers.Count);
+            // Bygg nycklar för redan materialiserade responses (AttemptId + QuestionId)
+            var existingKeys = await _context.Set<Response>()
+                .AsNoTracking()
+                .Select(r => new { r.AttemptId, r.QuestionId })
+                .ToListAsync(ct);
+
+            var existing = new HashSet<(Guid attemptId, Guid questionId)>(
+                existingKeys.Select(k => (k.AttemptId, k.QuestionId)));
+
+            var toInsert = new List<Response>(answers.Count);
+
             foreach (var aa in answers)
             {
-                rows.Add(new Response
+                var key = (aa.AttemptId, aa.QuestionId);
+                if (existing.Contains(key)) continue; // redan materialiserad
+
+                toInsert.Add(new Response
                 {
                     Id = Guid.NewGuid(),
-                    AttemptId = aa.AttemptId,        // <- FINNS i din Responses-modell
+                    AttemptId = aa.AttemptId,
                     QuestionId = aa.QuestionId,
                     SelectedOptionId = aa.SelectedOptionId,
                     IsCorrect = aa.IsCorrect,
                     TimeMs = aa.TimeMs,
-                    AnsweredAt = aa.AnsweredAt       // inga ?? på DateTime (icke-nullable)
+                    AnsweredAt = aa.AnsweredAt
                 });
             }
 
-            _context.Set<Response>().AddRange(rows);
-            await _context.SaveChangesAsync(ct);
+            if (toInsert.Count > 0)
+            {
+                _context.Set<Response>().AddRange(toInsert);
+                await _context.SaveChangesAsync(ct);
+            }
         }
 
-
-
+        // ───────────────────────────────
     }
 
     public static class DatabaseSeederExtensions
