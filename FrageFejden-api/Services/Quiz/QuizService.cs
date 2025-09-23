@@ -1,11 +1,14 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using FrageFejden.DTOs.Quiz;
 using FrageFejden.Entities;
 using FrageFejden.Entities.Enums;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Claims;
+using System.Threading.Tasks;
+
 
 namespace FrageFejden.Services
 {
@@ -24,15 +27,19 @@ namespace FrageFejden.Services
         Task<IEnumerable<QuizSummaryDto>> GetPublishedQuizzesAsync(Guid? subjectId = null, Guid? topicId = null, Guid? levelId = null);
         Task<bool> QuizExistsAsync(Guid id);
         Task<bool> CanUserAccessQuizAsync(Guid quizId, Guid userId);
+        Task<Guid> CreateAsync(Guid topicId, Guid levelId, string stem, string? explanation, List<(string Text, bool IsCorrect)> options);
+
     }
 
     public class QuizService : IQuizService
     {
         private readonly AppDbContext _context;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public QuizService(AppDbContext context)
+        public QuizService(AppDbContext context, IHttpContextAccessor httpContextAccessor)
         {
             _context = context;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<IEnumerable<QuizSummaryDto>> GetQuizzesAsync(QuizFilterDto? filter = null)
@@ -229,6 +236,7 @@ namespace FrageFejden.Services
                 throw;
             }
         }
+            
 
         public async Task<QuizDto?> UpdateQuizAsync(Guid id, UpdateQuizDto updateDto, Guid userId)
         {
@@ -486,5 +494,111 @@ namespace FrageFejden.Services
 
             return false;
         }
+
+        public async Task<Guid> CreateAsync(
+    Guid topicId,
+    Guid levelId,
+    string stem,
+    string? explanation,
+    List<(string Text, bool IsCorrect)> options)
+        {
+            // Validation
+            if (string.IsNullOrWhiteSpace(stem))
+                throw new ArgumentException("Question stem is required.", nameof(stem));
+            if (options is null || options.Count < 2)
+                throw new ArgumentException("A question needs at least two options.", nameof(options));
+            if (options.Any(o => string.IsNullOrWhiteSpace(o.Text)))
+                throw new ArgumentException("All options must have non-empty text.", nameof(options));
+            var correctCount = options.Count(o => o.IsCorrect);
+            if (correctCount != 1)
+                throw new ArgumentException("Exactly one option must be marked as correct.", nameof(options));
+
+            // Get SubjectId from Topic (lightweight query - no tracking needed)
+            var topicInfo = await _context.Topics
+                .AsNoTracking() // Safe since we're only reading
+                .Where(t => t.Id == topicId)
+                .Select(t => new { t.SubjectId, t.Id })
+                .FirstOrDefaultAsync();
+
+            if (topicInfo == null)
+                throw new ArgumentException("Topic not found.", nameof(topicId));
+
+            // Validate level exists and belongs to topic
+            var levelExists = await _context.Levels
+                .AsNoTracking()
+                .AnyAsync(l => l.Id == levelId && l.TopicId == topicId);
+
+            if (!levelExists)
+                throw new ArgumentException("Level not found or doesn't belong to the specified topic.");
+
+            // Get current user
+            var userIdStr = _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier)
+                             ?? throw new InvalidOperationException("No signed-in user.");
+
+            if (!Guid.TryParse(userIdStr, out var userIdGuid))
+                throw new InvalidOperationException("User id claim is not a valid GUID.");
+
+            var userExists = await _context.Users.AsNoTracking().AnyAsync(u => u.Id == userIdGuid);
+            if (!userExists)
+                throw new InvalidOperationException("Current user not found in AspNetUsers.");
+
+            // Generate new IDs to ensure they're truly new
+            var questionId = Guid.NewGuid();
+            var optionIds = options.Select(_ => Guid.NewGuid()).ToList();
+
+            // Create question entity with fresh ID
+            var question = new Question
+            {
+                Id = questionId, // Use the generated ID
+                SubjectId = topicInfo.SubjectId,
+                TopicId = topicId,
+                Type = QuestionType.multi_select,
+                Difficulty = Difficulty.medium,
+                Stem = stem.Trim(),
+                Explanation = string.IsNullOrWhiteSpace(explanation) ? null : explanation.Trim(),
+                SourceAi = false,
+                CreatedById = userIdGuid,
+                CreatedAt = DateTime.UtcNow // Use UtcNow consistently
+            };
+
+            // Create option entities with fresh IDs
+            var questionOptions = options
+                .Select((opt, idx) => new QuestionOption
+                {
+                    Id = optionIds[idx], // Use the generated IDs
+                    QuestionId = questionId,
+                    OptionText = opt.Text.Trim(),
+                    IsCorrect = opt.IsCorrect,
+                    SortOrder = idx + 1
+                })
+                .ToList();
+
+            try
+            {
+                // Add entities to context (EF will treat them as new since they have new IDs)
+                _context.Questions.Add(question);
+                _context.QuestionOptions.AddRange(questionOptions);
+
+                await _context.SaveChangesAsync();
+                return questionId;
+            }
+            catch (DbUpdateException ex)
+            {
+                // Handle specific database errors
+                if (ex.InnerException is SqlException sqlEx && sqlEx.Number == 547)
+                {
+                    if (sqlEx.Message.Contains("FK_Questions_Subjects_SubjectId"))
+                        throw new InvalidOperationException($"The subject with ID {topicInfo.SubjectId} does not exist in the database.");
+                    if (sqlEx.Message.Contains("FK_Questions_Topics_TopicId"))
+                        throw new InvalidOperationException($"The topic with ID {topicId} does not exist in the database.");
+                    if (sqlEx.Message.Contains("FK_Questions_CreatedBy"))
+                        throw new InvalidOperationException($"The user with ID {userIdGuid} does not exist in the database.");
+                }
+
+                throw new InvalidOperationException($"Database error occurred: {ex.Message}", ex);
+            }
+        }
     }
 }
+
+
