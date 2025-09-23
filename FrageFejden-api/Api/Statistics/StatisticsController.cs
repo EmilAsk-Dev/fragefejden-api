@@ -12,7 +12,7 @@ namespace FrageFejden_api.Api.Statistics
     [Authorize]
     public class StatisticsController : ControllerBase
     {
-        private readonly AppDbContext _context; 
+        private readonly AppDbContext _context;
 
         public StatisticsController(AppDbContext context)
         {
@@ -32,6 +32,7 @@ namespace FrageFejden_api.Api.Statistics
             var teacherId = GetCurrentUserId();
 
             var students = await _context.Set<ClassMembership>()
+                .AsNoTracking()
                 .Where(cm => cm.Class.CreatedById == teacherId && cm.RoleInClass == Role.student)
                 .Select(cm => new StudentDto
                 {
@@ -56,6 +57,7 @@ namespace FrageFejden_api.Api.Statistics
             var teacherId = GetCurrentUserId();
 
             var quizzes = await _context.Set<Quiz>()
+                .AsNoTracking()
                 .Where(q => q.CreatedById == teacherId)
                 .Select(q => new TeacherQuizDto
                 {
@@ -77,13 +79,15 @@ namespace FrageFejden_api.Api.Statistics
             return Ok(quizzes);
         }
 
-        // 3. Hämta elevers svar för att kunna räkna genomsnittligt svar för alla eleverna
+        // 3. Hämta elevers svar inkl. ämne/kurs för filtrering i frontend
         [HttpGet("student-responses")]
-        public async Task<ActionResult<List<StudentResponseDto>>> GetStudentResponses()
+        [Authorize(Roles = "teacher")]
+        public async Task<ActionResult<List<StudentResponseDto>>> GetStudentResponses(CancellationToken ct)
         {
             var teacherId = GetCurrentUserId();
 
             var responses = await _context.Set<Response>()
+                .AsNoTracking()
                 .Where(r => r.Attempt.Quiz.CreatedById == teacherId)
                 .Select(r => new StudentResponseDto
                 {
@@ -91,31 +95,34 @@ namespace FrageFejden_api.Api.Statistics
                     StudentName = r.Attempt.User.FullName,
                     QuizId = r.Attempt.QuizId,
                     QuizTitle = r.Attempt.Quiz.Title,
+                    // SubjectId/TopicId kan vara null i modellen → DTO är Guid?
+                    SubjectId = r.Attempt.Quiz.SubjectId,
+                    TopicId = r.Attempt.Quiz.TopicId,
                     QuestionId = r.QuestionId,
                     IsCorrect = r.IsCorrect,
                     TimeMs = r.TimeMs,
                     AttemptId = r.AttemptId,
                     CompletedAt = r.Attempt.CompletedAt
                 })
-                .ToListAsync();
+                .ToListAsync(ct);
 
             return Ok(responses);
         }
-        [Authorize(Roles = "teacher")]
+
         // 4. Hämta genomsnittligt resultat för alla elever
         [HttpGet("average-scores")]
+        [Authorize(Roles = "teacher")]
         public async Task<ActionResult<AverageScoreDto>> GetAverageScores()
         {
             var teacherId = GetCurrentUserId();
 
             var attempts = await _context.Set<Attempt>()
+                .AsNoTracking()
                 .Where(a => a.Quiz.CreatedById == teacherId && a.CompletedAt != null)
                 .ToListAsync();
 
             if (!attempts.Any())
-            {
-                return Ok(new AverageScoreDto { AverageScore = 0, TotalAttempts = 0 });
-            }
+                return Ok(new AverageScoreDto { AverageScore = 0, AverageXpEarned = 0, TotalAttempts = 0 });
 
             var avgScore = attempts.Where(a => a.Score.HasValue).Average(a => a.Score!.Value);
             var avgXp = attempts.Average(a => a.XpEarned);
@@ -130,11 +137,13 @@ namespace FrageFejden_api.Api.Statistics
 
         // 5. Hämta bästa resultatet på den bästa eleven
         [HttpGet("top-performer")]
+        [Authorize(Roles = "teacher")]
         public async Task<ActionResult<TopPerformerDto>> GetTopPerformer()
         {
             var teacherId = GetCurrentUserId();
 
             var topPerformer = await _context.Set<Attempt>()
+                .AsNoTracking()
                 .Where(a => a.Quiz.CreatedById == teacherId && a.CompletedAt != null && a.Score != null)
                 .GroupBy(a => a.UserId)
                 .Select(g => new TopPerformerDto
@@ -156,11 +165,13 @@ namespace FrageFejden_api.Api.Statistics
 
         // 6. Hämta genomförda quiz samt när de genomfördes
         [HttpGet("completed-quizzes")]
+        [Authorize(Roles = "teacher")]
         public async Task<ActionResult<List<CompletedQuizDto>>> GetCompletedQuizzes()
         {
             var teacherId = GetCurrentUserId();
 
             var completedQuizzes = await _context.Set<Attempt>()
+                .AsNoTracking()
                 .Where(a => a.Quiz.CreatedById == teacherId && a.CompletedAt != null)
                 .Select(a => new CompletedQuizDto
                 {
@@ -183,24 +194,25 @@ namespace FrageFejden_api.Api.Statistics
 
         // 7. Hämta tidsgenomsnitt för genomförda quiz
         [HttpGet("time-averages")]
+        [Authorize(Roles = "teacher")]
         public async Task<ActionResult<TimeAveragesDto>> GetTimeAverages()
         {
             var teacherId = GetCurrentUserId();
 
             var completedAttempts = await _context.Set<Attempt>()
+                .AsNoTracking()
                 .Where(a => a.Quiz.CreatedById == teacherId && a.CompletedAt != null)
                 .ToListAsync();
 
             if (!completedAttempts.Any())
-            {
                 return Ok(new TimeAveragesDto());
-            }
 
             var durations = completedAttempts
                 .Select(a => (a.CompletedAt!.Value - a.StartedAt).TotalMinutes)
                 .ToList();
 
             var responses = await _context.Set<Response>()
+                .AsNoTracking()
                 .Where(r => r.Attempt.Quiz.CreatedById == teacherId && r.TimeMs != null)
                 .Select(r => r.TimeMs!.Value)
                 .ToListAsync();
@@ -216,17 +228,19 @@ namespace FrageFejden_api.Api.Statistics
 
         // 8. Hämta leaderboard för alla elever
         [HttpGet("leaderboard")]
+        [Authorize(Roles = "teacher")]
         public async Task<ActionResult<List<LeaderboardEntryDto>>> GetLeaderboard()
         {
             var teacherId = GetCurrentUserId();
 
-            // Get all students in teacher's classes
             var studentIds = await _context.Set<ClassMembership>()
+                .AsNoTracking()
                 .Where(cm => cm.Class.CreatedById == teacherId && cm.RoleInClass == Role.student)
                 .Select(cm => cm.UserId)
                 .ToListAsync();
 
             var leaderboard = await _context.Set<AppUser>()
+                .AsNoTracking()
                 .Where(u => studentIds.Contains(u.Id))
                 .Select(u => new LeaderboardEntryDto
                 {
@@ -256,24 +270,21 @@ namespace FrageFejden_api.Api.Statistics
                 .ThenByDescending(l => l.AverageScore)
                 .ToListAsync();
 
-            // Add ranking
             for (int i = 0; i < leaderboard.Count; i++)
-            {
                 leaderboard[i].Rank = i + 1;
-            }
 
             return Ok(leaderboard);
         }
 
-        // 9 
+        // 9. Genomsnittlig svarstid per elev
         [HttpGet("response-time-per-student")]
         [Authorize(Roles = "teacher")]
         public async Task<ActionResult<List<ResponseTimePerStudentDto>>> GetResponseTimePerStudent([FromQuery] Guid? classId = null)
         {
             var teacherId = GetCurrentUserId();
 
-            // Begränsa till elever i lärarens egna klasser
             var studentInTeachersClasses = _context.Set<ClassMembership>()
+                .AsNoTracking()
                 .Where(cm => cm.Class.CreatedById == teacherId && cm.RoleInClass == Role.student);
 
             if (classId.HasValue)
@@ -283,11 +294,10 @@ namespace FrageFejden_api.Api.Statistics
                 .Select(cm => new { cm.UserId, cm.ClassId, ClassName = cm.Class.Name, cm.User.FullName })
                 .Distinct();
 
-            // Hämta responses för lärarens quiz (med tid satt)
             var responsesQ = _context.Set<Response>()
+                .AsNoTracking()
                 .Where(r => r.Attempt.Quiz.CreatedById == teacherId && r.TimeMs != null);
 
-            // Filtrera på urvalet av elever
             var query =
                 from s in studentsQ
                 join r in responsesQ on s.UserId equals r.Attempt.UserId into sr
@@ -317,27 +327,29 @@ namespace FrageFejden_api.Api.Statistics
             return Ok(list);
         }
 
-        // Bonus: Quiz-specific statistics
+        // 10. Statistik för ett specifikt quiz
         [HttpGet("quiz/{quizId}/statistics")]
+        [Authorize(Roles = "teacher")]
         public async Task<ActionResult<QuizStatisticsDto>> GetQuizStatistics(Guid quizId)
         {
             var teacherId = GetCurrentUserId();
 
             var quiz = await _context.Set<Quiz>()
+                .AsNoTracking()
                 .Where(q => q.Id == quizId && q.CreatedById == teacherId)
                 .FirstOrDefaultAsync();
 
             if (quiz == null)
-            {
                 return NotFound("Quiz not found or you don't have permission to view it.");
-            }
 
             var attempts = await _context.Set<Attempt>()
+                .AsNoTracking()
                 .Where(a => a.QuizId == quizId && a.CompletedAt != null)
                 .Include(a => a.User)
                 .ToListAsync();
 
             var responses = await _context.Set<Response>()
+                .AsNoTracking()
                 .Where(r => r.Attempt.QuizId == quizId && r.Attempt.CompletedAt != null)
                 .ToListAsync();
 
@@ -355,7 +367,8 @@ namespace FrageFejden_api.Api.Statistics
         }
     }
 
-    // DTOs
+    // ───────────────────────── DTOs ─────────────────────────
+
     public class StudentDto
     {
         public Guid Id { get; set; }
@@ -387,9 +400,11 @@ namespace FrageFejden_api.Api.Statistics
         public string StudentName { get; set; } = null!;
         public Guid QuizId { get; set; }
         public string QuizTitle { get; set; } = null!;
+        public Guid? SubjectId { get; set; }   // ändrat till Guid?
+        public Guid? TopicId { get; set; }     // ändrat till Guid?
         public Guid QuestionId { get; set; }
         public bool IsCorrect { get; set; }
-        public int? TimeMs { get; set; }
+        public long? TimeMs { get; set; }
         public Guid AttemptId { get; set; }
         public DateTime? CompletedAt { get; set; }
     }
@@ -460,9 +475,9 @@ namespace FrageFejden_api.Api.Statistics
     public class ResponseTimePerStudentDto
     {
         public Guid StudentId { get; set; }
-        public string? StudentName { get; set; } // valfritt, nice to have
-        public Guid? ClassId { get; set; }       // valfritt
-        public string? ClassName { get; set; }   // valfritt
+        public string? StudentName { get; set; }
+        public Guid? ClassId { get; set; }
+        public string? ClassName { get; set; }
         public double AvgSeconds { get; set; }
         public int ResponseCount { get; set; }
     }
