@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using FrageFejden.Entities;
 using FrageFejden.Entities.Enums;
+using FrageFejden_api.Entities.Tables;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -46,6 +47,14 @@ namespace FrageFejden.Data
         private readonly List<Question> _questions = new();
         private readonly List<QuestionOption> _options = new();
         private readonly List<Quiz> _quizzes = new();
+
+        // ── OLOF-SEEDER (ägare till extra-quizzarna) ─────────────────────────────
+        private static readonly Guid OlofId = Guid.Parse("55555555-2222-2222-2222-555555555552");
+
+        // Idempotenta id:n för Olofs extra-quizzar
+        private static readonly Guid OlofQuizAlg2_9B = Guid.Parse("77777777-aaaa-aaaa-aaaa-777777777701");
+        private static readonly Guid OlofQuizWW2_9C = Guid.Parse("77777777-bbbb-bbbb-bbbb-777777777702");
+
 
         public DatabaseSeeder(AppDbContext context, UserManager<AppUser> userManager, RoleManager<IdentityRole<Guid>> roleManager)
         {
@@ -89,6 +98,16 @@ namespace FrageFejden.Data
 
             // 10) Attach questions to every quiz for that (topic, level)
             await SeedIfEmpty<QuizQuestion>(SeedQuizQuestionsAsync, ct);
+
+            // ── OLOF-SEEDER ─────────────────────────────
+            // 11) Extra quizzar som Olof äger
+            await SeedOlofQuizzesAsync(ct);
+            await SeedOlofAttemptsAsync(ct);
+
+            // 12) Materialisera student-responses till tabellen dbo.Responses
+            await SeedIfEmpty<Response>(() => SeedResponsesFromAttemptAnswersAsync(ct), ct);
+            // ───────────────────────────────
+
 
             await tx.CommitAsync(ct);
         }
@@ -741,6 +760,299 @@ namespace FrageFejden.Data
 
             _context.Set<QuizQuestion>().AddRange(quizQuestions);
         }
+
+
+        // ── OLOF-SEEDER ─────────────────────────────
+        private async Task SeedOlofQuizzesAsync(CancellationToken ct = default)
+        {
+            // Vad vi vill lägga till för Olof
+            var specs = new[]
+            {
+        new {
+            QuizId = OlofQuizAlg2_9B,
+            ClassId = Class9B,
+            SubjectId = SubjectMath,
+            TopicId = TopicAlgebra,
+            LevelNum = 2,
+            Title = "Algebra – Nivå 2 Quiz (Olof)",
+            Desc  = "Olofs quiz för 9B – Algebra nivå 2"
+        },
+        new {
+            QuizId = OlofQuizWW2_9C,
+            ClassId = Class9C,
+            SubjectId = SubjectHistory,
+            TopicId = TopicWW2,
+            LevelNum = 1,
+            Title = "Andra världskriget – Nivå 1 Quiz (Olof)",
+            Desc  = "Olofs quiz för 9C – WW2 nivå 1"
+        }
+    };
+
+            var now = DateTime.UtcNow.AddDays(-3);
+
+            foreach (var s in specs)
+            {
+                // Hoppa om det redan finns (idempotent seeding)
+                if (await _context.Set<Quiz>().AnyAsync(q => q.Id == s.QuizId, ct))
+                    continue;
+
+                // Hämta LevelId för (topic, level)
+                var levelId = await _context.Set<Level>()
+                    .Where(l => l.TopicId == s.TopicId && l.LevelNumber == s.LevelNum)
+                    .Select(l => l.Id)
+                    .FirstAsync(ct);
+
+                // Skapa själva quizet – viktigt: CreatedById = OlofId
+                _context.Set<Quiz>().Add(new Quiz
+                {
+                    Id = s.QuizId,
+                    SubjectId = s.SubjectId,
+                    TopicId = s.TopicId,
+                    LevelId = levelId,
+                    ClassId = s.ClassId,
+                    Title = s.Title,
+                    Description = s.Desc,
+                    IsPublished = true,
+                    CreatedById = OlofId,
+                    CreatedAt = now
+                });
+
+                // Knyt frågor – försök använda de som redan mappats för (topic, level)
+                List<Guid> qIds;
+                if (!_questionIdsByLevel.TryGetValue((s.TopicId, s.LevelNum), out qIds))
+                {
+                    // Fallback om in-memory-mappen är tom (t.ex. om frågor fanns redan innan körning):
+                    qIds = await _context.Set<Question>()
+                        .Where(q => q.SubjectId == s.SubjectId)
+                        .OrderBy(q => q.CreatedAt)
+                        .Select(q => q.Id)
+                        .Take(3)
+                        .ToListAsync(ct);
+                }
+
+                int sort = 1;
+                foreach (var qId in qIds)
+                {
+                    _context.Set<QuizQuestion>().Add(new QuizQuestion
+                    {
+                        Id = Guid.NewGuid(),
+                        QuizId = s.QuizId,
+                        QuestionId = qId,
+                        SortOrder = sort++
+                    });
+                }
+            }
+
+            await _context.SaveChangesAsync(ct);
+        }
+
+
+        // ── OLOF-SEEDER: Hjälpare ──────────────────────────────────────────────
+        // ── OLOF-SEEDER: Hjälpare för att resetta data för ett quiz ─────────────────
+        // ── OLOF-SEEDER: Hjälpare för att resetta data för ett quiz ─────────────────
+        private async Task ResetQuizAttemptsAndResponsesAsync(Guid quizId, CancellationToken ct)
+        {
+            // 1) Hämta alla attempts för quizet
+            var attemptIds = await _context.Set<Attempt>()
+                .Where(a => a.QuizId == quizId)
+                .Select(a => a.Id)
+                .ToListAsync(ct);
+
+            if (!attemptIds.Any())
+                return; // inget att rensa
+
+            // 2) Ta bort Responses kopplat till dessa attempts
+            var oldResponses = await _context.Set<Response>()
+                .Where(r => attemptIds.Contains(r.AttemptId))
+                .ToListAsync(ct);
+            if (oldResponses.Any())
+                _context.RemoveRange(oldResponses);
+
+            // 3) Ta bort AttemptAnswers kopplat till dessa attempts
+            var oldAnswers = await _context.Set<AttemptAnswer>()
+                .Where(aa => attemptIds.Contains(aa.AttemptId))
+                .ToListAsync(ct);
+            if (oldAnswers.Any())
+                _context.RemoveRange(oldAnswers);
+
+            // 4) Ta bort Attempts
+            var oldAttempts = await _context.Set<Attempt>()
+                .Where(a => attemptIds.Contains(a.Id))
+                .ToListAsync(ct);
+            if (oldAttempts.Any())
+                _context.RemoveRange(oldAttempts);
+
+            await _context.SaveChangesAsync(ct);
+        }
+
+
+
+        // ── OLOF-SEEDER: Mönster för rätt/fel så att ämnes-/kursfilter ger olika utfall ──
+        private static bool[] BuildAnswerPattern(Guid quizId, Guid studentId, int numQuestions)
+        {
+            // Tre elev-“buckets” per quiz, så varje klass får spridning.
+            var bucket = Math.Abs(studentId.GetHashCode()) % 3;
+
+            // Olofs 9B – Algebra nivå 2: 67%, 33%, 100%
+            if (quizId == OlofQuizAlg2_9B)
+            {
+                var patterns = new[]
+                {
+            new[] { true,  true,  false }, // ≈67%
+            new[] { true,  false, false }, // ≈33%
+            new[] { true,  true,  true  }, // 100%
+        };
+                var p = patterns[bucket];
+                return Enumerable.Range(0, numQuestions).Select(i => p[i % p.Length]).ToArray();
+            }
+
+            // Olofs 9C – WW2 nivå 1: 33%, 67%, 0%
+            if (quizId == OlofQuizWW2_9C)
+            {
+                var patterns = new[]
+                {
+            new[] { false, false, true  }, // ≈33%
+            new[] { false, true,  true  }, // ≈67%
+            new[] { false, false, false }, // 0%
+        };
+                var p = patterns[bucket];
+                return Enumerable.Range(0, numQuestions).Select(i => p[i % p.Length]).ToArray();
+            }
+
+            // Fallback (borde inte nås här): varannan rätt
+            return Enumerable.Range(0, numQuestions).Select(i => i % 2 == 0).ToArray();
+        }
+
+
+        // ── OLOF-SEEDER ─────────────────────────────
+        private async Task SeedOlofAttemptsAsync(CancellationToken ct = default)
+        {
+            var specs = new[]
+            {
+        new { QuizId = OlofQuizAlg2_9B, Students = new[]
+        {
+            Guid.Parse("66666666-1001-1001-1001-666666666671"),
+            Guid.Parse("66666666-1002-1002-1002-666666666672"),
+            Guid.Parse("66666666-1003-1003-1003-666666666673"),
+        }},
+        new { QuizId = OlofQuizWW2_9C, Students = new[]
+        {
+            Guid.Parse("66666666-2001-2001-2001-666666666681"),
+            Guid.Parse("66666666-2002-2002-2002-666666666682"),
+            Guid.Parse("66666666-2003-2003-2003-666666666683"),
+        }}
+    };
+
+            var now = DateTime.UtcNow.AddDays(-1);
+
+            foreach (var s in specs)
+            {
+                // Gör det reseed-bart: rensa tidigare data för quizet
+                await ResetQuizAttemptsAndResponsesAsync(s.QuizId, ct);
+
+                var qq = await _context.Set<QuizQuestion>()
+                    .Where(x => x.QuizId == s.QuizId)
+                    .OrderBy(x => x.SortOrder)
+                    .ToListAsync(ct);
+
+                if (qq.Count == 0) continue;
+
+                var qIds = qq.Select(x => x.QuestionId).ToList();
+
+                var options = await _context.Set<QuestionOption>()
+                    .Where(o => qIds.Contains(o.QuestionId))
+                    .ToListAsync(ct);
+
+                var optionsByQ = options
+                    .GroupBy(o => o.QuestionId)
+                    .ToDictionary(g => g.Key, g => g.ToList());
+
+                foreach (var studentId in s.Students)
+                {
+                    var started = now.AddMinutes((Math.Abs(studentId.GetHashCode()) % 60) - 60);
+
+                    // Bygg elevspecifikt mönster för detta quiz (ger varierande %)
+                    var pattern = BuildAnswerPattern(s.QuizId, studentId, qIds.Count);
+
+                    var attempt = new Attempt
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = studentId,
+                        QuizId = s.QuizId,
+                        StartedAt = started,
+                        CompletedAt = started.AddMinutes(5),
+                        Score = 0,         // sätts efter vi räknat rätt svar
+                        XpEarned = 100
+                    };
+                    _context.Set<Attempt>().Add(attempt);
+
+                    int correctCount = 0;
+                    for (int i = 0; i < qIds.Count; i++)
+                    {
+                        var qId = qIds[i];
+                        var opts = optionsByQ[qId];
+                        var correctOpt = opts.First(o => o.IsCorrect);
+                        var anyWrong = opts.First(o => !o.IsCorrect);
+
+                        bool isCorrect = pattern[i];
+                        var chosen = isCorrect ? correctOpt : anyWrong;
+                        if (isCorrect) correctCount++;
+
+                        _context.Set<AttemptAnswer>().Add(new AttemptAnswer
+                        {
+                            Id = Guid.NewGuid(),
+                            AttemptId = attempt.Id,
+                            QuestionId = qId,
+                            SelectedOptionId = chosen.Id,
+                            IsCorrect = isCorrect,
+                            TimeMs = 5000 + i * 2000 + (Math.Abs(studentId.GetHashCode()) % 1000),
+                            AnsweredAt = started.AddSeconds(30 * (i + 1))
+                        });
+                    }
+
+                    attempt.Score = correctCount * 100;
+                }
+
+                await _context.SaveChangesAsync(ct);
+            }
+
+            // Materialisera om Responses för de nytillagda answers
+            await SeedResponsesFromAttemptAnswersAsync(ct);
+        }
+
+        // ───────────────────────────────
+
+        private async Task SeedResponsesFromAttemptAnswersAsync(CancellationToken ct = default)
+        {
+            // Idempotent: gör inget om det redan finns rows
+            if (await _context.Set<Response>().AnyAsync(ct)) return;
+
+            // Hämta alla attempt-answers (vi behöver AttemptId för joinar i API:t)
+            var answers = await _context.Set<AttemptAnswer>()
+                .AsNoTracking()
+                .ToListAsync(ct);
+
+            var rows = new List<Response>(answers.Count);
+            foreach (var aa in answers)
+            {
+                rows.Add(new Response
+                {
+                    Id = Guid.NewGuid(),
+                    AttemptId = aa.AttemptId,        // <- FINNS i din Responses-modell
+                    QuestionId = aa.QuestionId,
+                    SelectedOptionId = aa.SelectedOptionId,
+                    IsCorrect = aa.IsCorrect,
+                    TimeMs = aa.TimeMs,
+                    AnsweredAt = aa.AnsweredAt       // inga ?? på DateTime (icke-nullable)
+                });
+            }
+
+            _context.Set<Response>().AddRange(rows);
+            await _context.SaveChangesAsync(ct);
+        }
+
+
+
     }
 
     public static class DatabaseSeederExtensions
